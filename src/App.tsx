@@ -1,10 +1,40 @@
 import { useEffect, useState } from "react"
 import { PlayerId } from "rune-sdk"
+import { GameState } from "./logic"
 
-import selectSoundAudio from "./assets/select.wav"
-import { GameState } from "./logic.ts"
+interface Card {
+  id: string
+  name: string
+  // Add more card properties as needed
+}
 
-const selectSound = new Audio(selectSoundAudio)
+function PlayerHand({ cards, coins }: { cards: Card[]; coins: number }) {
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
+
+  const handleCardSelect = (cardId: string) => {
+    setSelectedCardId(selectedCardId === cardId ? null : cardId)
+  }
+
+  return (
+    <div className="player-hand">
+      <div className="hand-cards">
+        {cards.map((card) => (
+          <div
+            key={card.id}
+            className={`card ${selectedCardId === card.id ? "selected" : ""}`}
+            onClick={() => handleCardSelect(card.id)}
+          >
+            {card.name}
+          </div>
+        ))}
+      </div>
+      <div className="coin-counter">
+        <span className="coin-icon">🪙</span>
+        <span className="coin-amount">{coins}</span>
+      </div>
+    </div>
+  )
+}
 
 function App() {
   const [game, setGame] = useState<GameState>()
@@ -12,76 +42,36 @@ function App() {
 
   useEffect(() => {
     Rune.initClient({
-      onChange: ({ game, action, yourPlayerId }) => {
+      onChange: ({ game, yourPlayerId }) => {
         setGame(game)
         setYourPlayerId(yourPlayerId)
-
-        if (action && action.name === "claimCell") selectSound.play()
       },
     })
   }, [])
 
   if (!game) {
-    // Rune only shows your game after an onChange() so no need for loading screen
-    return
+    return null
   }
 
-  const { winCombo, cells, lastMovePlayerId, playerIds, freeCells } = game
+  // Temporary mock data - will be replaced with actual game state
+  const mockPlayerHand: Card[] = [
+    { id: "1", name: "Card 1" },
+    { id: "2", name: "Card 2" },
+    { id: "3", name: "Card 3" },
+  ]
+  const mockCoins = 5
+
+  const playerInfo = yourPlayerId ? Rune.getPlayerInfo(yourPlayerId) : null
 
   return (
-    <>
-      <div id="board" className={!lastMovePlayerId ? "initial" : ""}>
-        {cells.map((cell, cellIndex) => {
-          const cellValue = cells[cellIndex]
-
-          return (
-            <button
-              key={cellIndex}
-              onClick={() => Rune.actions.claimCell(cellIndex)}
-              data-player={(cellValue !== null
-                ? playerIds.indexOf(cellValue)
-                : -1
-              ).toString()}
-              data-dim={String(
-                (winCombo && !winCombo.includes(cellIndex)) ||
-                  (!freeCells && !winCombo)
-              )}
-              {...(cells[cellIndex] ||
-              lastMovePlayerId === yourPlayerId ||
-              winCombo
-                ? { "data-disabled": "" }
-                : {})}
-            />
-          )
-        })}
+    <div className="game-container">
+      <div className="main-area">
+        {playerInfo && <div className="player-info">Playing as: {playerInfo.displayName}</div>}
       </div>
-      <ul id="playersSection">
-        {playerIds.map((playerId, index) => {
-          const player = Rune.getPlayerInfo(playerId)
-
-          return (
-            <li
-              key={playerId}
-              data-player={index.toString()}
-              data-your-turn={String(
-                playerIds[index] !== lastMovePlayerId && !winCombo && freeCells
-              )}
-            >
-              <img src={player.avatarUrl} />
-              <span>
-                {player.displayName}
-                {player.playerId === yourPlayerId && (
-                  <span>
-                    <br />
-                    (You)
-                  </span>
-                )}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-    </>
+      <div className="bottom-area">
+        <PlayerHand cards={mockPlayerHand} coins={mockCoins} />
+      </div>
+    </div>
   )
 }
 

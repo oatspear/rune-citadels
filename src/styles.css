@@ -8,6 +8,104 @@ html {
     Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
+.game-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.main-area {
+  flex: 1;
+  background: #444;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.player-info {
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.bottom-area {
+  height: 200px; /* Fixed height instead of vh to ensure consistent card display */
+  background: #222;
+  padding: 1rem;
+  border-top: 2px solid #555;
+}
+
+.player-hand {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hand-cards {
+  height: 140px; /* Fixed height for cards container */
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem;
+  align-items: center;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scroll-snap-type: x mandatory; /* Enable snap scrolling */
+  overscroll-behavior-x: contain; /* Prevent overscroll on mobile */
+}
+
+.card {
+  min-width: 80px;
+  height: 120px;
+  background: #666;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  border: 2px solid #888;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, border-color 0.2s;
+  cursor: pointer;
+  scroll-snap-align: start; /* Snap points for cards */
+  user-select: none; /* Prevent text selection on touch */
+  touch-action: pan-x pinch-zoom; /* Allow horizontal scrolling but prevent vertical */
+}
+
+.card:hover, .card:active {
+  transform: translateY(-10px);
+}
+
+.card.selected {
+  border-color: #4a9eff;
+  transform: translateY(-10px);
+  box-shadow: 0 4px 8px rgba(74, 158, 255, 0.3);
+}
+
+.coin-counter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.5rem;
+  width: fit-content;
+}
+
+.coin-icon {
+  font-size: 1.2rem;
+}
+
+.coin-amount {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: gold;
+}
+
 main {
   display: flex;
   flex-direction: column;
