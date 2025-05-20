@@ -8,7 +8,19 @@ interface Card {
   // Add more card properties as needed
 }
 
-function PlayerHand({ cards, coins }: { cards: Card[]; coins: number }) {
+interface Character {
+  id: number
+  name: string
+  icon: string // We'll use emojis for now, can be replaced with images later
+}
+
+interface PlayerHandProps {
+  cards: Card[]
+  coins: number
+  character?: Character // Optional because player might not have selected a character yet
+}
+
+function PlayerHand({ cards, coins, character }: PlayerHandProps) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
 
   const handleCardSelect = (cardId: string) => {
@@ -28,9 +40,19 @@ function PlayerHand({ cards, coins }: { cards: Card[]; coins: number }) {
           </div>
         ))}
       </div>
-      <div className="coin-counter">
-        <span className="coin-icon">🪙</span>
-        <span className="coin-amount">{coins}</span>
+      <div className="player-status">
+        <div className="coin-counter">
+          <span className="coin-icon">🪙</span>
+          <span className="coin-amount">{coins}</span>
+        </div>
+        <div className="character-display">
+          <span className="character-icon">
+            {character ? character.icon : "👤"}
+          </span>
+          <span className="character-name">
+            {character ? character.name : "No character selected"}
+          </span>
+        </div>
       </div>
     </div>
   )
@@ -60,16 +82,29 @@ function App() {
     { id: "3", name: "Card 3" },
   ]
   const mockCoins = 5
+  const mockCharacter: Character = {
+    id: 1,
+    name: "Assassin",
+    icon: "🗡️",
+  }
 
   const playerInfo = yourPlayerId ? Rune.getPlayerInfo(yourPlayerId) : null
 
   return (
     <div className="game-container">
       <div className="main-area">
-        {playerInfo && <div className="player-info">Playing as: {playerInfo.displayName}</div>}
+        {playerInfo && (
+          <div className="player-info">
+            Playing as: {playerInfo.displayName}
+          </div>
+        )}
       </div>
       <div className="bottom-area">
-        <PlayerHand cards={mockPlayerHand} coins={mockCoins} />
+        <PlayerHand
+          cards={mockPlayerHand}
+          coins={mockCoins}
+          character={mockCharacter}
+        />
       </div>
     </div>
   )
