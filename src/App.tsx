@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
-import { PlayerId } from "rune-sdk"
-import { GameState, Character, District } from "./logic"
+import type { PlayerId } from "rune-sdk"
+import type { GameState, Character, District } from "./logic"
+import { CharacterTargetOverlay } from "./components/CharacterTargetOverlay"
 
 // Constants
 const MAX_PLAYERS = 4
@@ -13,6 +14,7 @@ interface PlayerBoardProps {
   isCurrentPlayer: boolean
   city?: District[]
   hasCrown: boolean
+  isCurrentTurn: boolean
 }
 
 function CityDistrict({ district }: { district: District }) {
@@ -35,11 +37,16 @@ function PlayerBoard({
   isCurrentPlayer,
   city = [],
   hasCrown,
+  isCurrentTurn,
 }: PlayerBoardProps) {
   const playerInfo = playerId ? Rune.getPlayerInfo(playerId) : null
 
   return (
-    <div className={`player-board ${isCurrentPlayer ? "current-player" : ""}`}>
+    <div
+      className={`player-board ${isCurrentPlayer ? "current-player" : ""} ${
+        isCurrentTurn ? "current-turn" : ""
+      }`}
+    >
       <div className="player-board-header">
         {playerInfo ? (
           <img src={playerInfo.avatarUrl} className="player-avatar" />
@@ -49,6 +56,7 @@ function PlayerBoard({
         <span className="player-name">
           {playerInfo ? playerInfo.displayName : "Waiting for player..."}
           {hasCrown && <span className="crown-indicator">👑</span>}
+          {isCurrentTurn && <span className="turn-indicator">🎯</span>}
         </span>
       </div>
       <div className="player-board-stats">
@@ -147,14 +155,18 @@ function PlayerHand({
   coins,
   onCardSelect,
   onSpecialAbility,
+  disabled,
+  phase,
 }: {
   character?: Character
   onCharacterSelect: (character: Character) => void
   availableCharacters: Character[]
   cards: District[]
   coins: number
-  onCardSelect: (card: District) => void
+  onCardSelect?: (card: District) => void
   onSpecialAbility?: () => void
+  disabled?: boolean
+  phase: "CHARACTER_SELECTION" | "PLAY_TURNS"
 }) {
   const [isCharacterSelectOpen, setIsCharacterSelectOpen] = useState(false)
   const [isHandCardsOpen, setIsHandCardsOpen] = useState(false)
@@ -174,7 +186,9 @@ function PlayerHand({
         cards={cards}
         coins={coins}
         onSelect={(card) => {
-          onCardSelect(card)
+          if (onCardSelect) {
+            onCardSelect(card)
+          }
           setIsHandCardsOpen(false)
         }}
         isExpanded={isHandCardsOpen}
@@ -192,6 +206,7 @@ function PlayerHand({
               aria-label={
                 isCharacterSelectOpen ? "Hide characters" : "Select character"
               }
+              disabled={phase !== "CHARACTER_SELECTION"}
             >
               {character?.icon || "👤"}
             </button>
@@ -206,6 +221,7 @@ function PlayerHand({
                 setIsCharacterSelectOpen(false)
               }}
               aria-label={isHandCardsOpen ? "Hide cards" : "Show cards"}
+              disabled={disabled}
             >
               📜
             </button>
@@ -215,11 +231,18 @@ function PlayerHand({
           <button
             className="action-button special-ability"
             onClick={() => onSpecialAbility?.()}
-            disabled={!character || !onSpecialAbility}
+            disabled={
+              !character ||
+              !onSpecialAbility ||
+              disabled ||
+              phase !== "PLAY_TURNS"
+            }
             title={
-              character
-                ? getCharacterAbilityDescription(character)
-                : "Select a character first"
+              disabled
+                ? "Not your turn"
+                : character
+                  ? getCharacterAbilityDescription(character)
+                  : "Select a character first"
             }
           >
             <span className="ability-icon">{character?.icon}</span>
@@ -255,34 +278,96 @@ function getCharacterAbilityDescription(character: Character): string {
   }
 }
 
+// Available characters
+const characters: Character[] = [
+  { id: 1, name: "Assassin", icon: "🗡️" },
+  { id: 2, name: "Thief", icon: "🦹" },
+  { id: 3, name: "Magician", icon: "🧙" },
+  { id: 4, name: "King", icon: "👑" },
+  { id: 5, name: "Bishop", icon: "⛪" },
+  { id: 6, name: "Merchant", icon: "💰" },
+  { id: 7, name: "Architect", icon: "🏗️" },
+  { id: 8, name: "Warlord", icon: "⚔️" },
+]
+
 function App() {
   const [game, setGame] = useState<GameState>()
-  const [yourPlayerId, setYourPlayerId] = useState<PlayerId | undefined>()
+  const [yourPlayerId, setYourPlayerId] = useState<PlayerId>()
 
   useEffect(() => {
     Rune.initClient({
-      onChange: ({ game, yourPlayerId }) => {
-        setGame(game)
-        setYourPlayerId(yourPlayerId)
+      onChange: (params) => {
+        setGame(params.game)
+        setYourPlayerId(params.yourPlayerId)
       },
     })
   }, [])
 
-  if (!game) {
-    return null
+  // Handlers for game actions
+  const handleCardSelect = (district: District) => {
+    if (!yourPlayerId || !game) return
+    Rune.actions.playDistrict({ districtId: district.id })
   }
 
-  // Available characters
-  const characters: Character[] = [
-    { id: 1, name: "Assassin", icon: "🗡️" },
-    { id: 2, name: "Thief", icon: "🦹" },
-    { id: 3, name: "Magician", icon: "🧙" },
-    { id: 4, name: "King", icon: "👑" },
-    { id: 5, name: "Bishop", icon: "⛪" },
-    { id: 6, name: "Merchant", icon: "💰" },
-    { id: 7, name: "Architect", icon: "🏗️" },
-    { id: 8, name: "Warlord", icon: "⚔️" },
-  ]
+  const handleCharacterSelect = (character: Character) => {
+    if (!yourPlayerId || !game) return
+    if (game.turnPhase === "CHARACTER_SELECTION") {
+      Rune.actions.selectCharacter({ characterId: character.id })
+    }
+  }
+
+  const handleSpecialAbility = () => {
+    if (!yourPlayerId || !game) return
+    Rune.actions.useCharacterAbility(null)
+  }
+
+  const handleCharacterTargetCancel = () => {
+    if (!yourPlayerId || !game?.targetSelection?.active) return
+    Rune.actions.useCharacterAbility(null)
+  }
+
+  // Helper functions
+  const getPlayerCharacters = () => {
+    if (!game) return []
+    return game.playerIds.map((playerId) => ({
+      playerId,
+      character: game.playerStates[playerId].character,
+    }))
+  }
+
+  const getCurrentCharacter = () => {
+    if (!game || !yourPlayerId) return null
+    return game.playerStates[yourPlayerId].character || null
+  }
+
+  // Player turn checks
+  const isPlayerTurn = (playerId: PlayerId): boolean => {
+    if (!game || !playerId) return false
+
+    if (game.turnPhase === "CHARACTER_SELECTION") {
+      // During character selection, crown holder goes first, then clockwise
+      // TODO: Implement proper character selection order
+      return true
+    }
+
+    const playerState = game.playerStates[playerId]
+    if (!playerState?.character) return false
+
+    return (
+      playerState.character.id === game.currentCharacterId &&
+      playerState.character.id !== game.assassinatedCharacterId
+    )
+  }
+
+  const getCurrentTurnPlayerId = (): PlayerId | undefined => {
+    if (!game) return undefined
+
+    return Object.entries(game.playerStates).find(
+      ([, state]) => state.character?.id === game.currentCharacterId
+    )?.[0]
+  }
+
+  if (!game) return null
 
   // Get available characters (not taken by other players)
   const takenCharacterIds = new Set(
@@ -295,27 +380,6 @@ function App() {
     (c) => !takenCharacterIds.has(c.id)
   )
 
-  // Handle character selection
-  const handleCharacterSelect = (character: Character) => {
-    if (yourPlayerId) {
-      Rune.actions.selectCharacter(character.id)
-    }
-  }
-
-  // Handle special ability use
-  const handleSpecialAbility = () => {
-    if (yourPlayerId) {
-      Rune.actions.useCharacterAbility()
-    }
-  }
-
-  // Handle card selection
-  const handleCardSelect = (district: District) => {
-    if (yourPlayerId) {
-      Rune.actions.playDistrict(district.id)
-    }
-  }
-
   // Update player slots
   const playerSlots = Array(MAX_PLAYERS)
     .fill(null)
@@ -327,6 +391,7 @@ function App() {
           isCurrentPlayer: false,
           hasCrown: false,
           city: [],
+          isCurrentTurn: false,
         } as PlayerBoardProps
       }
 
@@ -340,6 +405,7 @@ function App() {
         city: playerState?.city || [],
         isCurrentPlayer,
         hasCrown: playerId === game.crownHolder,
+        isCurrentTurn: playerId === getCurrentTurnPlayerId(),
       } as PlayerBoardProps
     })
     .sort((a, b) => {
@@ -351,10 +417,30 @@ function App() {
   const currentPlayerState = yourPlayerId
     ? game.playerStates[yourPlayerId]
     : null
+  const canPlay = isPlayerTurn(yourPlayerId!)
 
   return (
     <div className="game-container">
       <div className="main-area">
+        {game.targetSelection?.active && (
+          <CharacterTargetOverlay
+            targetSelection={game.targetSelection}
+            players={getPlayerCharacters()}
+            onSelect={(targetId, districtId) => {
+              if (districtId) {
+                Rune.actions.useCharacterAbility({
+                  targetDistrictId: districtId,
+                })
+              } else {
+                Rune.actions.useCharacterAbility({
+                  targetCharacterId: targetId,
+                })
+              }
+            }}
+            onCancel={handleCharacterTargetCancel}
+            currentCharacter={getCurrentCharacter()}
+          />
+        )}
         <div className="game-boards">
           {playerSlots.map((player, index) => (
             <PlayerBoard key={index} {...player} />
@@ -368,9 +454,19 @@ function App() {
           availableCharacters={availableCharacters}
           cards={currentPlayerState?.hand || []}
           coins={currentPlayerState?.coins || 0}
-          onCardSelect={handleCardSelect}
-          onSpecialAbility={handleSpecialAbility}
+          onCardSelect={canPlay ? handleCardSelect : undefined}
+          onSpecialAbility={canPlay ? handleSpecialAbility : undefined}
+          disabled={!canPlay}
+          phase={game.turnPhase}
         />
+        {canPlay && (
+          <button
+            className="end-turn-button"
+            onClick={() => Rune.actions.endTurn(null)}
+          >
+            End Turn
+          </button>
+        )}
       </div>
     </div>
   )

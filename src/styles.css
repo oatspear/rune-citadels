@@ -26,24 +26,29 @@ html {
   padding: 0.25rem;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* Prevents flex container from growing beyond viewport */
-  overflow: hidden; /* Let game-boards handle scrolling */
+  min-height: 0;  /* Allows flex container to shrink */
+  overflow: hidden;
+  position: relative;
 }
 
 .bottom-area {
   background: #222;
   padding: 1rem;
   border-top: 2px solid #555;
-  flex: 0 0 auto;
-  position: relative; /* Add relative positioning */
-  z-index: 10; /* Ensure it stays above game boards */
+  position: relative;
+  z-index: 10;
+  height: auto;
+  min-height: min-content;
+  max-height: 280px; /* Set a maximum height */
+  display: flex;
+  flex-direction: column;
 }
 
 .player-hand {
-  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  flex: 0 0 auto;
 }
 
 .hand-cards-overlay {
@@ -202,12 +207,6 @@ button {
   position: relative;
   background: transparent;
   border: 1.3vw solid #e6e6e620;
-  border-left: 0;
-  border-top: 0;
-  width: 100%;
-  aspect-ratio: 1;
-  padding: 0;
-  margin: 0;
 }
 
 button:before {
@@ -253,6 +252,11 @@ button:not([data-disabled]) {
   border-color: #4a9eff;
   box-shadow: 0 0 15px rgba(74, 158, 255, 0.2);
   background: rgba(0, 0, 0, 0.4);
+}
+
+.player-board.current-turn {
+  border-color: #00ff00;
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
 }
 
 .player-board-header {
@@ -393,9 +397,12 @@ button:not([data-disabled]) {
   display: flex;
   gap: 1rem;
   justify-content: center;
+  align-items: center;
   padding: 1rem;
   background: rgba(0, 0, 0, 0.3);
   border-radius: 0.75rem;
+  height: 80px;
+  flex: 0 0 auto;
 }
 
 .action-button {
@@ -558,6 +565,10 @@ button:not([data-disabled]) {
   color: #ff4444;
 }
 
+.district.not-buildable {
+  pointer-events: none;
+}
+
 .crown-indicator {
   display: inline-block;
   margin-left: 0.5rem;
@@ -573,4 +584,118 @@ button:not([data-disabled]) {
   50% {
     transform: translateY(-4px);
   }
+}
+
+.turn-indicator {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+.end-turn-button {
+  background: #4a9eff;
+  color: white;
+  border: none;
+  border-radius: 1.25rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+  margin-top: 1rem;
+}
+
+.end-turn-button:hover {
+  background: #3a8eff;
+  transform: translateY(-2px);
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+.action-button.special-ability:disabled {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.character-target-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%) translateY(100vh);
+  height: auto;
+  max-height: 80vh;
+  background: rgba(0, 0, 0, 0.95);
+  transition: transform 0.3s ease-out;
+  z-index: 1000;
+  border-top: 2px solid #555;
+  border-bottom: 2px solid #555;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.character-target-overlay.expanded {
+  transform: translateY(-50%);
+}
+
+.target-title {
+  text-align: center;
+  margin: 0;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.character-target-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 0.75rem;
+  overflow-y: auto;
+  max-height: 50vh;
+  padding: 0.5rem;
+}
+
+.cancel-button {
+  background: rgba(255, 0, 0, 0.2);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease-out;
+  margin-top: auto;
+}
+
+.cancel-button:hover {
+  background: rgba(255, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+.target-character {
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.target-character.selectable {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: pointer;
 }
