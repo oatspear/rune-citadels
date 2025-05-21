@@ -73,18 +73,52 @@ function CharacterSelect({
   )
 }
 
+interface HandCard {
+  id: string
+  name: string
+  type: string
+}
+
+interface HandCardsListProps {
+  cards: HandCard[]
+  onSelect: (card: HandCard) => void
+  isExpanded: boolean
+}
+
+function HandCardsList({ cards, onSelect, isExpanded }: HandCardsListProps) {
+  return (
+    <div className={`character-select-overlay ${isExpanded ? "expanded" : ""}`}>
+      <div className="hand-cards-list">
+        {cards.map((card) => (
+          <div
+            key={card.id}
+            className="character-option"
+            onClick={() => onSelect(card)}
+          >
+            <span className="character-icon">📜</span>
+            <span className="character-name">{card.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function PlayerHand({
-  coins,
   character,
   onCharacterSelect,
   availableCharacters,
+  cards,
+  onCardSelect,
 }: {
-  coins: number
   character?: Character
   onCharacterSelect: (character: Character) => void
   availableCharacters: Character[]
+  cards: HandCard[]
+  onCardSelect: (card: HandCard) => void
 }) {
   const [isCharacterSelectOpen, setIsCharacterSelectOpen] = useState(false)
+  const [isHandCardsOpen, setIsHandCardsOpen] = useState(false)
 
   return (
     <>
@@ -97,30 +131,45 @@ function PlayerHand({
         isExpanded={isCharacterSelectOpen}
       />
 
+      <HandCardsList
+        cards={cards}
+        onSelect={(card) => {
+          onCardSelect(card)
+          setIsHandCardsOpen(false)
+        }}
+        isExpanded={isHandCardsOpen}
+      />
+
       {/* Fixed bottom bar */}
       <div className="player-hand">
-        <div className="player-status">
-          <div className="coin-counter">
-            <span className="coin-icon">🪙</span>
-            <span className="coin-amount">{coins}</span>
+        <div className="action-buttons">
+          <div>
+            <button
+              className={`action-button ${isCharacterSelectOpen ? "expanded" : ""}`}
+              onClick={() => {
+                setIsCharacterSelectOpen(!isCharacterSelectOpen)
+                setIsHandCardsOpen(false)
+              }}
+              aria-label={isCharacterSelectOpen ? "Hide characters" : "Select character"}
+            >
+              {character?.icon || "👤"}
+            </button>
+            <div className="action-button-label">Character</div>
           </div>
-          <div className="character-display">
-            <span className="character-icon">
-              {character ? character.icon : "👤"}
-            </span>
-            <span className="character-name">
-              {character ? character.name : "No character selected"}
-            </span>
+
+          <div>
+            <button
+              className={`action-button ${isHandCardsOpen ? "expanded" : ""}`}
+              onClick={() => {
+                setIsHandCardsOpen(!isHandCardsOpen)
+                setIsCharacterSelectOpen(false)
+              }}
+              aria-label={isHandCardsOpen ? "Hide cards" : "Show cards"}
+            >
+              📜
+            </button>
+            <div className="action-button-label">Cards ({cards.length})</div>
           </div>
-          <button
-            className={`expand-hand-button ${isCharacterSelectOpen ? "expanded" : ""}`}
-            onClick={() => setIsCharacterSelectOpen(!isCharacterSelectOpen)}
-            aria-label={
-              isCharacterSelectOpen ? "Hide characters" : "Select character"
-            }
-          >
-            {isCharacterSelectOpen ? "~" : "^"}
-          </button>
         </div>
       </div>
     </>
@@ -213,6 +262,18 @@ function App() {
     ? game.playerStates[yourPlayerId]
     : null
 
+  // Mock cards for now - will be replaced with actual game state later
+  const mockCards = [
+    { id: "1", name: "Manor", type: "district" },
+    { id: "2", name: "Tavern", type: "district" },
+    { id: "3", name: "Market", type: "district" },
+  ]
+
+  const handleCardSelect = (card: HandCard) => {
+    // TODO: Implement card playing logic
+    console.log("Selected card:", card)
+  }
+
   return (
     <div className="game-container">
       <div className="main-area">
@@ -224,10 +285,11 @@ function App() {
       </div>
       <div className="bottom-area">
         <PlayerHand
-          coins={currentPlayerState?.coins || 0}
           character={currentPlayerState?.character}
           onCharacterSelect={handleCharacterSelect}
           availableCharacters={availableCharacters}
+          cards={mockCards}
+          onCardSelect={handleCardSelect}
         />
       </div>
     </div>
