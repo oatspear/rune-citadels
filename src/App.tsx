@@ -107,7 +107,7 @@ function PlayerHand({ cards, coins, character }: PlayerHandProps) {
             onClick={() => setIsHandExpanded(!isHandExpanded)}
             aria-label={isHandExpanded ? "Collapse hand" : "Expand hand"}
           >
-            {isHandExpanded ? "⌄" : "^"}
+            {isHandExpanded ? "~" : "^"}
           </button>
         </div>
       </div>
@@ -147,27 +147,29 @@ function App() {
 
   const playerInfo = yourPlayerId ? Rune.getPlayerInfo(yourPlayerId) : null
 
-  // Create array of 4 player slots
-  const playerSlots = Array(4)
+  // Create array of opponent slots first (3 slots)
+  const opponentSlots = Array(3)
     .fill(null)
-    .map((_, index) => {
-      // If this is the current player's slot
-      if (playerInfo && index === 0) {
-        return {
-          playerId: playerInfo.playerId,
-          coins: mockCoins,
-          character: mockCharacter,
-          isCurrentPlayer: true,
-        }
-    }
-    // For other slots, create empty or mock players
-      return {
-      coins: index === 2 ? 7 : 3, // Mock different coin amounts
-        character:
-          index === 2 ? { id: 2, name: "Thief", icon: "🦹" } : undefined,
-        isCurrentPlayer: false,
-    }
-  })
+    .map(
+      (_, index) =>
+        ({
+          coins: index === 1 ? 7 : 3,
+          character:
+            index === 1 ? { id: 2, name: "Thief", icon: "🦹" } : undefined,
+          isCurrentPlayer: false,
+        }) as PlayerBoardProps
+    )
+
+  // Create current player slot separately
+  const currentPlayerSlot: PlayerBoardProps = {
+    playerId: playerInfo?.playerId,
+    coins: mockCoins,
+    character: mockCharacter,
+    isCurrentPlayer: true,
+  }
+
+  // Combine all slots with current player at the end
+  const playerSlots = [...opponentSlots, currentPlayerSlot]
 
   return (
     <div className="game-container">
