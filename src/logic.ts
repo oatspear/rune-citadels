@@ -6,7 +6,19 @@ export interface GameState {
   winCombo: number[] | null
   lastMovePlayerId: PlayerId | null
   playerIds: PlayerId[]
+  playerStates: {
+    [key: string]: {
+      coins: number
+      character?: Character
+    }
+  }
   freeCells?: boolean
+}
+
+export interface Character {
+  id: number
+  name: string
+  icon: string
 }
 
 type GameActions = {
@@ -42,6 +54,9 @@ Rune.initLogic({
     winCombo: null,
     lastMovePlayerId: null,
     playerIds: allPlayerIds,
+    playerStates: Object.fromEntries(
+      allPlayerIds.map(id => [id, { coins: 2 }])
+    ),
   }),
   actions: {
     claimCell: (cellIndex, { game, playerId, allPlayerIds }) => {

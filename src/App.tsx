@@ -1,17 +1,11 @@
 import { useEffect, useState } from "react"
 import { PlayerId } from "rune-sdk"
-import { GameState } from "./logic"
+import { GameState, Character } from "./logic"
 
 interface Card {
   id: string
   name: string
   // Add more card properties as needed
-}
-
-interface Character {
-  id: number
-  name: string
-  icon: string // We'll use emojis for now, can be replaced with images later
 }
 
 interface PlayerBoardProps {
@@ -132,44 +126,49 @@ function App() {
     return null
   }
 
-  // Temporary mock data - will be replaced with actual game state
+  // Temporary mock data for the hand only
   const mockPlayerHand: Card[] = [
     { id: "1", name: "Card 1" },
     { id: "2", name: "Card 2" },
     { id: "3", name: "Card 3" },
   ]
-  const mockCoins = 5
-  const mockCharacter: Character = {
-    id: 1,
-    name: "Assassin",
-    icon: "🗡️",
-  }
-
-  const playerInfo = yourPlayerId ? Rune.getPlayerInfo(yourPlayerId) : null
-
-  // Create array of opponent slots first (3 slots)
-  const opponentSlots = Array(3)
+  
+  // Get all players in the game
+  const maxPlayers = 4
+  
+  // Create array of all player slots
+  const playerSlots = Array(maxPlayers)
     .fill(null)
-    .map(
-      (_, index) =>
-        ({
-          coins: index === 1 ? 7 : 3,
-          character:
-            index === 1 ? { id: 2, name: "Thief", icon: "🦹" } : undefined,
+    .map((_, index) => {
+      const playerId = game.playerIds[index]
+      
+      if (!playerId) {
+        // Empty slot
+        return {
+          coins: 0,
           isCurrentPlayer: false,
-        }) as PlayerBoardProps
-    )
+        } as PlayerBoardProps
+      }
 
-  // Create current player slot separately
-  const currentPlayerSlot: PlayerBoardProps = {
-    playerId: playerInfo?.playerId,
-    coins: mockCoins,
-    character: mockCharacter,
-    isCurrentPlayer: true,
-  }
+      const playerState = game.playerStates[playerId]
+      const isCurrentPlayer = playerId === yourPlayerId
 
-  // Combine all slots with current player at the end
-  const playerSlots = [...opponentSlots, currentPlayerSlot]
+      return {
+        playerId,
+        coins: playerState?.coins || 0,
+        character: playerState?.character,
+        isCurrentPlayer,
+      } as PlayerBoardProps
+    })
+    // Sort so that current player appears last
+    .sort((a, b) => {
+      if (a.isCurrentPlayer) return 1
+      if (b.isCurrentPlayer) return -1
+      return 0
+    })
+
+  // Get current player's state
+  const currentPlayerState = yourPlayerId ? game.playerStates[yourPlayerId] : null
 
   return (
     <div className="game-container">
@@ -183,8 +182,8 @@ function App() {
       <div className="bottom-area">
         <PlayerHand
           cards={mockPlayerHand}
-          coins={mockCoins}
-          character={mockCharacter}
+          coins={currentPlayerState?.coins || 0}
+          character={currentPlayerState?.character}
         />
       </div>
     </div>
