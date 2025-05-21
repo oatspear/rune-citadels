@@ -432,3 +432,124 @@ button:not([data-disabled]) {
   height: 100%;
   overflow-y: auto;
 }
+
+.action-button.special-ability {
+  width: auto;
+  padding: 0 1.5rem;
+  border-radius: 1.25rem;
+  font-size: 1rem;
+  background: rgba(74, 158, 255, 0.2);
+  border-color: rgba(74, 158, 255, 0.3);
+}
+
+.action-button.special-ability:hover:not(:disabled) {
+  background: rgba(74, 158, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.action-button.special-ability:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.action-button.special-ability .ability-icon {
+  margin-right: 0.5rem;
+  font-size: 1.2em;
+}
+
+.player-city {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.5rem;
+  min-height: 70px;
+}
+
+.district {
+  position: relative;
+  aspect-ratio: 3/4;
+  background: #444;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.district.noble {
+  background: linear-gradient(135deg, #4a0072, #2b0043);
+  border-color: #6b00a8;
+}
+
+.district.religious {
+  background: linear-gradient(135deg, #004d99, #002952);
+  border-color: #0066cc;
+}
+
+.district.trade {
+  background: linear-gradient(135deg, #006634, #003a1d);
+  border-color: #008542;
+}
+
+.district.military {
+  background: linear-gradient(135deg, #990000, #520000);
+  border-color: #cc0000;
+}
+
+.district.unique {
+  background: linear-gradient(135deg, #996600, #523600);
+  border-color: #cc8800;
+}
+
+.district-cost {
+  position: absolute;
+  top: 0.25rem;
+  left: 0.25rem;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  width: 1.2rem;
+  height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.8rem;
+  color: #ffd700;
+}
+
+.district-name {
+  font-weight: 600;
+  margin: 0.25rem 0;
+  font-size: 0.65rem;
+}
+
+.district-type {
+  font-size: 0.6rem;
+  opacity: 0.7;
+  text-transform: capitalize;
+}
+
+.district.buildable {
+  cursor: pointer;
+}
+
+.district.buildable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.district.not-buildable {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.district.not-buildable .district-cost {
+  color: #ff4444;
+}

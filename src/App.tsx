@@ -1,12 +1,30 @@
 import { useEffect, useState } from "react"
 import { PlayerId } from "rune-sdk"
-import { GameState, Character } from "./logic"
+import { GameState, Character, District } from "./logic"
 
+// Constants
+const MAX_PLAYERS = 4
+
+// Component interfaces and implementations
 interface PlayerBoardProps {
-  playerId?: string // Make playerId optional for empty slots
+  playerId?: string
   coins: number
   character?: Character
   isCurrentPlayer: boolean
+  city?: District[]
+}
+
+function CityDistrict({ district }: { district: District }) {
+  return (
+    <div
+      className={`district ${district.type}`}
+      title={`${district.name} (${district.cost})`}
+    >
+      <div className="district-cost">{district.cost}</div>
+      <div className="district-name">{district.name}</div>
+      <div className="district-type">{district.type}</div>
+    </div>
+  )
 }
 
 function PlayerBoard({
@@ -14,6 +32,7 @@ function PlayerBoard({
   coins,
   character,
   isCurrentPlayer,
+  city = [],
 }: PlayerBoardProps) {
   const playerInfo = playerId ? Rune.getPlayerInfo(playerId) : null
 
@@ -39,6 +58,11 @@ function PlayerBoard({
             {character.name}
           </div>
         )}
+      </div>
+      <div className="player-city">
+        {city.map((district, index) => (
+          <CityDistrict key={`${district.id}-${index}`} district={district} />
+        ))}
       </div>
     </div>
   )
@@ -80,23 +104,37 @@ interface HandCard {
 }
 
 interface HandCardsListProps {
-  cards: HandCard[]
-  onSelect: (card: HandCard) => void
+  cards: District[]
+  coins: number
+  onSelect: (card: District) => void
   isExpanded: boolean
 }
 
-function HandCardsList({ cards, onSelect, isExpanded }: HandCardsListProps) {
+function HandCardsList({
+  cards,
+  coins,
+  onSelect,
+  isExpanded,
+}: HandCardsListProps) {
   return (
-    <div className={`character-select-overlay ${isExpanded ? "expanded" : ""}`}>
+    <div className={`hand-cards-overlay ${isExpanded ? "expanded" : ""}`}>
       <div className="hand-cards-list">
         {cards.map((card) => (
           <div
             key={card.id}
-            className="character-option"
-            onClick={() => onSelect(card)}
+            className={`district ${card.type} ${
+              coins >= card.cost ? "buildable" : "not-buildable"
+            }`}
+            onClick={() => coins >= card.cost && onSelect(card)}
+            title={
+              coins >= card.cost
+                ? `Build ${card.name} (${card.cost} coins)`
+                : `Not enough coins to build ${card.name} (need ${card.cost})`
+            }
           >
-            <span className="character-icon">📜</span>
-            <span className="character-name">{card.name}</span>
+            <div className="district-cost">{card.cost}</div>
+            <div className="district-name">{card.name}</div>
+            <div className="district-type">{card.type}</div>
           </div>
         ))}
       </div>
@@ -109,13 +147,17 @@ function PlayerHand({
   onCharacterSelect,
   availableCharacters,
   cards,
+  coins,
   onCardSelect,
+  onSpecialAbility,
 }: {
   character?: Character
   onCharacterSelect: (character: Character) => void
   availableCharacters: Character[]
-  cards: HandCard[]
-  onCardSelect: (card: HandCard) => void
+  cards: District[]
+  coins: number
+  onCardSelect: (card: District) => void
+  onSpecialAbility?: () => void
 }) {
   const [isCharacterSelectOpen, setIsCharacterSelectOpen] = useState(false)
   const [isHandCardsOpen, setIsHandCardsOpen] = useState(false)
@@ -133,6 +175,7 @@ function PlayerHand({
 
       <HandCardsList
         cards={cards}
+        coins={coins}
         onSelect={(card) => {
           onCardSelect(card)
           setIsHandCardsOpen(false)
@@ -140,7 +183,6 @@ function PlayerHand({
         isExpanded={isHandCardsOpen}
       />
 
-      {/* Fixed bottom bar */}
       <div className="player-hand">
         <div className="action-buttons">
           <div>
@@ -150,7 +192,9 @@ function PlayerHand({
                 setIsCharacterSelectOpen(!isCharacterSelectOpen)
                 setIsHandCardsOpen(false)
               }}
-              aria-label={isCharacterSelectOpen ? "Hide characters" : "Select character"}
+              aria-label={
+                isCharacterSelectOpen ? "Hide characters" : "Select character"
+              }
             >
               {character?.icon || "👤"}
             </button>
@@ -170,10 +214,48 @@ function PlayerHand({
             </button>
             <div className="action-button-label">Cards ({cards.length})</div>
           </div>
+
+          <button
+            className="action-button special-ability"
+            onClick={() => onSpecialAbility?.()}
+            disabled={!character || !onSpecialAbility}
+            title={
+              character
+                ? getCharacterAbilityDescription(character)
+                : "Select a character first"
+            }
+          >
+            <span className="ability-icon">{character?.icon}</span>
+            Use Ability
+          </button>
         </div>
       </div>
     </>
   )
+}
+
+// Get character ability description
+function getCharacterAbilityDescription(character: Character): string {
+  switch (character.name) {
+    case "Assassin":
+      return "Kill another character"
+    case "Thief":
+      return "Steal coins from another character"
+    case "Magician":
+      return "Exchange cards with another player or the deck"
+    case "King":
+      return "Take crown and 1 gold for each noble district"
+    case "Bishop":
+      return "Protect districts and 1 gold for each religious district"
+    case "Merchant":
+      return "Get 1 extra gold and 1 gold for each trade district"
+    case "Architect":
+      return "Draw 2 extra cards"
+    case "Warlord":
+      return "Destroy a district and 1 gold for each military district"
+    default:
+      return "No special ability"
+  }
 }
 
 function App() {
@@ -223,21 +305,27 @@ function App() {
     }
   }
 
-  // Get all players in the game
-  const maxPlayers = 4
+  // Handle special ability use
+  const handleSpecialAbility = () => {
+    if (yourPlayerId) {
+      Rune.actions.useCharacterAbility()
+    }
+  }
 
-  // Create array of all player slots
-  const playerSlots = Array(maxPlayers)
+  // Handle card selection
+  const handleCardSelect = (district: District) => {
+    if (yourPlayerId) {
+      Rune.actions.playDistrict(district.id)
+    }
+  }
+
+  // Update player slots
+  const playerSlots = Array(MAX_PLAYERS)
     .fill(null)
     .map((_, index) => {
       const playerId = game.playerIds[index]
-
       if (!playerId) {
-        // Empty slot
-        return {
-          coins: 0,
-          isCurrentPlayer: false,
-        } as PlayerBoardProps
+        return { coins: 0, isCurrentPlayer: false } as PlayerBoardProps
       }
 
       const playerState = game.playerStates[playerId]
@@ -247,32 +335,19 @@ function App() {
         playerId,
         coins: playerState?.coins || 0,
         character: playerState?.character,
+        city: playerState?.city || [],
         isCurrentPlayer,
       } as PlayerBoardProps
     })
-    // Sort so that current player appears last
     .sort((a, b) => {
       if (a.isCurrentPlayer) return 1
       if (b.isCurrentPlayer) return -1
       return 0
     })
 
-  // Get current player's state
   const currentPlayerState = yourPlayerId
     ? game.playerStates[yourPlayerId]
     : null
-
-  // Mock cards for now - will be replaced with actual game state later
-  const mockCards = [
-    { id: "1", name: "Manor", type: "district" },
-    { id: "2", name: "Tavern", type: "district" },
-    { id: "3", name: "Market", type: "district" },
-  ]
-
-  const handleCardSelect = (card: HandCard) => {
-    // TODO: Implement card playing logic
-    console.log("Selected card:", card)
-  }
 
   return (
     <div className="game-container">
@@ -288,8 +363,10 @@ function App() {
           character={currentPlayerState?.character}
           onCharacterSelect={handleCharacterSelect}
           availableCharacters={availableCharacters}
-          cards={mockCards}
+          cards={currentPlayerState?.hand || []}
+          coins={currentPlayerState?.coins || 0}
           onCardSelect={handleCardSelect}
+          onSpecialAbility={handleSpecialAbility}
         />
       </div>
     </div>
