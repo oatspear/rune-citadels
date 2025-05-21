@@ -97,12 +97,6 @@ function CharacterSelect({
   )
 }
 
-interface HandCard {
-  id: string
-  name: string
-  type: string
-}
-
 interface HandCardsListProps {
   cards: District[]
   coins: number
