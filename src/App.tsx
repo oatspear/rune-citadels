@@ -132,16 +132,16 @@ function App() {
     { id: "2", name: "Card 2" },
     { id: "3", name: "Card 3" },
   ]
-  
+
   // Get all players in the game
   const maxPlayers = 4
-  
+
   // Create array of all player slots
   const playerSlots = Array(maxPlayers)
     .fill(null)
     .map((_, index) => {
       const playerId = game.playerIds[index]
-      
+
       if (!playerId) {
         // Empty slot
         return {
@@ -168,7 +168,9 @@ function App() {
     })
 
   // Get current player's state
-  const currentPlayerState = yourPlayerId ? game.playerStates[yourPlayerId] : null
+  const currentPlayerState = yourPlayerId
+    ? game.playerStates[yourPlayerId]
+    : null
 
   return (
     <div className="game-container">
