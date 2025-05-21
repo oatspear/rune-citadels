@@ -12,6 +12,7 @@ interface PlayerBoardProps {
   character?: Character
   isCurrentPlayer: boolean
   city?: District[]
+  hasCrown: boolean
 }
 
 function CityDistrict({ district }: { district: District }) {
@@ -33,6 +34,7 @@ function PlayerBoard({
   character,
   isCurrentPlayer,
   city = [],
+  hasCrown,
 }: PlayerBoardProps) {
   const playerInfo = playerId ? Rune.getPlayerInfo(playerId) : null
 
@@ -46,6 +48,7 @@ function PlayerBoard({
         )}
         <span className="player-name">
           {playerInfo ? playerInfo.displayName : "Waiting for player..."}
+          {hasCrown && <span className="crown-indicator">👑</span>}
         </span>
       </div>
       <div className="player-board-stats">
@@ -319,7 +322,12 @@ function App() {
     .map((_, index) => {
       const playerId = game.playerIds[index]
       if (!playerId) {
-        return { coins: 0, isCurrentPlayer: false } as PlayerBoardProps
+        return {
+          coins: 0,
+          isCurrentPlayer: false,
+          hasCrown: false,
+          city: [],
+        } as PlayerBoardProps
       }
 
       const playerState = game.playerStates[playerId]
@@ -331,6 +339,7 @@ function App() {
         character: playerState?.character,
         city: playerState?.city || [],
         isCurrentPlayer,
+        hasCrown: playerId === game.crownHolder,
       } as PlayerBoardProps
     })
     .sort((a, b) => {

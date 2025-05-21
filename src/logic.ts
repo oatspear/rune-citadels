@@ -91,14 +91,30 @@ declare global {
 Rune.initLogic({
   minPlayers: 2,
   maxPlayers: 6,
-  setup: (allPlayerIds) => ({
-    playerIds: allPlayerIds,
-    playerStates: Object.fromEntries(
-      allPlayerIds.map((id) => [id, { coins: 2, hand: [], city: [] }])
-    ),
-    deck: shuffle(DISTRICTS),
-    currentTurn: 0,
-  }),
+  setup: (allPlayerIds) => {
+    // Shuffle the deck
+    const shuffledDeck = shuffle([...DISTRICTS])
+
+    // Deal 4 cards to each player
+    const playerStates = Object.fromEntries(
+      allPlayerIds.map((id) => {
+        const hand = shuffledDeck.splice(0, 4)
+        return [id, { coins: 2, hand, city: [] }]
+      })
+    )
+
+    // Randomly assign the crown
+    const crownHolder =
+      allPlayerIds[Math.floor(Math.random() * allPlayerIds.length)]
+
+    return {
+      playerIds: allPlayerIds,
+      playerStates,
+      deck: shuffledDeck,
+      currentTurn: 0,
+      crownHolder,
+    }
+  },
   actions: {
     takeCoins: (_payload, { game, playerId, allPlayerIds }) => {
       if (playerId !== allPlayerIds[0]) {
@@ -138,33 +154,63 @@ Rune.initLogic({
         throw Rune.invalidAction()
       }
 
-      // TODO: Implement character-specific ability logic
       switch (playerState.character.name) {
-        case "Assassin":
+        case "Assassin": {
           // Will need UI to select a character to kill
           break
-        case "Thief":
+        }
+        case "Thief": {
           // Will need UI to select a character to steal from
           break
-        case "Magician":
+        }
+        case "Magician": {
           // Will need UI to select cards to exchange
           break
-        case "King":
+        }
+        case "King": {
+          // Transfer the crown to this player
+          game.crownHolder = playerId
+
           // Give gold for noble districts
+          const nobleDistrictCount = playerState.city.filter(
+            (d) => d.type === "noble"
+          ).length
+          playerState.coins += nobleDistrictCount
           break
-        case "Bishop":
+        }
+        case "Bishop": {
           // Give gold for religious districts
+          const religiousDistrictCount = playerState.city.filter(
+            (d) => d.type === "religious"
+          ).length
+          playerState.coins += religiousDistrictCount
           break
-        case "Merchant":
+        }
+        case "Merchant": {
           // Give extra gold and gold for trade districts
-          playerState.coins += 1
+          playerState.coins += 1 // Extra gold first
+          const tradeDistrictCount = playerState.city.filter(
+            (d) => d.type === "trade"
+          ).length
+          playerState.coins += tradeDistrictCount
           break
-        case "Architect":
-          // TODO: Implement drawing cards
+        }
+        case "Architect": {
+          // Draw 2 cards
+          const drawCount = Math.min(2, game.deck.length)
+          const drawnCards = game.deck.splice(0, drawCount)
+          playerState.hand.push(...drawnCards)
           break
-        case "Warlord":
+        }
+        case "Warlord": {
           // Will need UI to select a district to destroy
+          // Give gold for military districts first
+          const militaryDistrictCount = playerState.city.filter(
+            (d) => d.type === "military"
+          ).length
+          playerState.coins += militaryDistrictCount
           break
+        }
       }
     },
     playDistrict: (districtId, { game, playerId }) => {
