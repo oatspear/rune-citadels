@@ -2,12 +2,6 @@ import { useEffect, useState } from "react"
 import { PlayerId } from "rune-sdk"
 import { GameState, Character } from "./logic"
 
-interface Card {
-  id: string
-  name: string
-  // Add more card properties as needed
-}
-
 interface PlayerBoardProps {
   playerId?: string // Make playerId optional for empty slots
   coins: number
@@ -50,36 +44,58 @@ function PlayerBoard({
   )
 }
 
-interface PlayerHandProps {
-  cards: Card[]
-  coins: number
-  character?: Character // Optional because player might not have selected a character yet
+interface CharacterSelectProps {
+  characters: Character[]
+  onSelect: (character: Character) => void
+  isExpanded: boolean
 }
 
-function PlayerHand({ cards, coins, character }: PlayerHandProps) {
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
-  const [isHandExpanded, setIsHandExpanded] = useState(false)
+function CharacterSelect({
+  characters,
+  onSelect,
+  isExpanded,
+}: CharacterSelectProps) {
+  return (
+    <div className={`character-select-overlay ${isExpanded ? "expanded" : ""}`}>
+      <div className="character-grid">
+        {characters.map((character) => (
+          <div
+            key={character.id}
+            className="character-option"
+            onClick={() => onSelect(character)}
+          >
+            <span className="character-icon">{character.icon}</span>
+            <span className="character-name">{character.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
-  const handleCardSelect = (cardId: string) => {
-    setSelectedCardId(selectedCardId === cardId ? null : cardId)
-  }
+function PlayerHand({
+  coins,
+  character,
+  onCharacterSelect,
+  availableCharacters,
+}: {
+  coins: number
+  character?: Character
+  onCharacterSelect: (character: Character) => void
+  availableCharacters: Character[]
+}) {
+  const [isCharacterSelectOpen, setIsCharacterSelectOpen] = useState(false)
 
   return (
     <>
-      {/* Overlay for hand cards */}
-      <div className={`hand-cards-overlay ${isHandExpanded ? "expanded" : ""}`}>
-        <div className="hand-cards">
-          {cards.map((card) => (
-            <div
-              key={card.id}
-              className={`card ${selectedCardId === card.id ? "selected" : ""}`}
-              onClick={() => handleCardSelect(card.id)}
-            >
-              {card.name}
-            </div>
-          ))}
-        </div>
-      </div>
+      <CharacterSelect
+        characters={availableCharacters}
+        onSelect={(char) => {
+          onCharacterSelect(char)
+          setIsCharacterSelectOpen(false)
+        }}
+        isExpanded={isCharacterSelectOpen}
+      />
 
       {/* Fixed bottom bar */}
       <div className="player-hand">
@@ -97,11 +113,13 @@ function PlayerHand({ cards, coins, character }: PlayerHandProps) {
             </span>
           </div>
           <button
-            className={`expand-hand-button ${isHandExpanded ? "expanded" : ""}`}
-            onClick={() => setIsHandExpanded(!isHandExpanded)}
-            aria-label={isHandExpanded ? "Collapse hand" : "Expand hand"}
+            className={`expand-hand-button ${isCharacterSelectOpen ? "expanded" : ""}`}
+            onClick={() => setIsCharacterSelectOpen(!isCharacterSelectOpen)}
+            aria-label={
+              isCharacterSelectOpen ? "Hide characters" : "Select character"
+            }
           >
-            {isHandExpanded ? "~" : "^"}
+            {isCharacterSelectOpen ? "~" : "^"}
           </button>
         </div>
       </div>
@@ -126,12 +144,35 @@ function App() {
     return null
   }
 
-  // Temporary mock data for the hand only
-  const mockPlayerHand: Card[] = [
-    { id: "1", name: "Card 1" },
-    { id: "2", name: "Card 2" },
-    { id: "3", name: "Card 3" },
+  // Available characters
+  const characters: Character[] = [
+    { id: 1, name: "Assassin", icon: "🗡️" },
+    { id: 2, name: "Thief", icon: "🦹" },
+    { id: 3, name: "Magician", icon: "🧙" },
+    { id: 4, name: "King", icon: "👑" },
+    { id: 5, name: "Bishop", icon: "⛪" },
+    { id: 6, name: "Merchant", icon: "💰" },
+    { id: 7, name: "Architect", icon: "🏗️" },
+    { id: 8, name: "Warlord", icon: "⚔️" },
   ]
+
+  // Get available characters (not taken by other players)
+  const takenCharacterIds = new Set(
+    Object.values(game.playerStates)
+      .map((state) => state.character?.id)
+      .filter(Boolean)
+  )
+
+  const availableCharacters = characters.filter(
+    (c) => !takenCharacterIds.has(c.id)
+  )
+
+  // Handle character selection
+  const handleCharacterSelect = (character: Character) => {
+    if (yourPlayerId) {
+      Rune.actions.selectCharacter(character.id)
+    }
+  }
 
   // Get all players in the game
   const maxPlayers = 4
@@ -183,9 +224,10 @@ function App() {
       </div>
       <div className="bottom-area">
         <PlayerHand
-          cards={mockPlayerHand}
           coins={currentPlayerState?.coins || 0}
           character={currentPlayerState?.character}
+          onCharacterSelect={handleCharacterSelect}
+          availableCharacters={availableCharacters}
         />
       </div>
     </div>

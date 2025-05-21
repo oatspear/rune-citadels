@@ -17,8 +17,21 @@ export interface Character {
   icon: string
 }
 
+// List of available characters
+const CHARACTERS: Character[] = [
+  { id: 1, name: "Assassin", icon: "🗡️" },
+  { id: 2, name: "Thief", icon: "🦹" },
+  { id: 3, name: "Magician", icon: "🧙" },
+  { id: 4, name: "King", icon: "👑" },
+  { id: 5, name: "Bishop", icon: "⛪" },
+  { id: 6, name: "Merchant", icon: "💰" },
+  { id: 7, name: "Architect", icon: "🏗️" },
+  { id: 8, name: "Warlord", icon: "⚔️" },
+]
+
 type GameActions = {
   takeCoins: () => void
+  selectCharacter: (characterId: number) => void
 }
 
 declare global {
@@ -48,6 +61,24 @@ Rune.initLogic({
           },
         })
       }
+    },
+    selectCharacter: (characterId, { game, playerId }) => {
+      // Validate character selection
+      const character = CHARACTERS.find((c) => c.id === characterId)
+      if (!character) {
+        throw Rune.invalidAction()
+      }
+
+      // Check if character is already taken
+      const isCharacterTaken = Object.values(game.playerStates).some(
+        (state) => state.character?.id === characterId
+      )
+      if (isCharacterTaken) {
+        throw Rune.invalidAction()
+      }
+
+      // Assign character to player
+      game.playerStates[playerId].character = character
     },
   },
 })
