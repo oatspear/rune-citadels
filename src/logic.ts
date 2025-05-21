@@ -141,7 +141,7 @@ declare global {
 // Initialize game logic
 Rune.initLogic({
   minPlayers: 2,
-  maxPlayers: 6,
+  maxPlayers: 2,
   setup: (allPlayerIds: PlayerId[]): GameState => {
     // Shuffle the deck
     const shuffledDeck = shuffle([...DISTRICTS])
