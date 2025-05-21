@@ -64,39 +64,54 @@ interface PlayerHandProps {
 
 function PlayerHand({ cards, coins, character }: PlayerHandProps) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
+  const [isHandExpanded, setIsHandExpanded] = useState(false)
 
   const handleCardSelect = (cardId: string) => {
     setSelectedCardId(selectedCardId === cardId ? null : cardId)
   }
 
   return (
-    <div className="player-hand">
-      <div className="hand-cards">
-        {cards.map((card) => (
-          <div
-            key={card.id}
-            className={`card ${selectedCardId === card.id ? "selected" : ""}`}
-            onClick={() => handleCardSelect(card.id)}
-          >
-            {card.name}
+    <>
+      {/* Overlay for hand cards */}
+      <div className={`hand-cards-overlay ${isHandExpanded ? "expanded" : ""}`}>
+        <div className="hand-cards">
+          {cards.map((card) => (
+            <div
+              key={card.id}
+              className={`card ${selectedCardId === card.id ? "selected" : ""}`}
+              onClick={() => handleCardSelect(card.id)}
+            >
+              {card.name}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Fixed bottom bar */}
+      <div className="player-hand">
+        <div className="player-status">
+          <div className="coin-counter">
+            <span className="coin-icon">🪙</span>
+            <span className="coin-amount">{coins}</span>
           </div>
-        ))}
-      </div>
-      <div className="player-status">
-        <div className="coin-counter">
-          <span className="coin-icon">🪙</span>
-          <span className="coin-amount">{coins}</span>
+          <div className="character-display">
+            <span className="character-icon">
+              {character ? character.icon : "👤"}
+            </span>
+            <span className="character-name">
+              {character ? character.name : "No character selected"}
+            </span>
+          </div>
+          <button
+            className={`expand-hand-button ${isHandExpanded ? "expanded" : ""}`}
+            onClick={() => setIsHandExpanded(!isHandExpanded)}
+            aria-label={isHandExpanded ? "Collapse hand" : "Expand hand"}
+          >
+            {isHandExpanded ? "⌄" : "^"}
+          </button>
         </div>
-        <div className="character-display">
-          <span className="character-icon">
-            {character ? character.icon : "👤"}
-          </span>
-          <span className="character-name">
-            {character ? character.name : "No character selected"}
-          </span>
-        </div>
       </div>
-    </div>
+    </>
   )
 }
 
