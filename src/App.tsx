@@ -225,36 +225,26 @@ function PlayerHand({
 
       <div className="player-hand">
         <div className="action-buttons">
-          <div>
-            <button
-              className={`action-button ${isCharacterSelectOpen ? "expanded" : ""}`}
-              onClick={() => {
-                // Only toggle if selection is allowed
-                if (canSelectCharacter) {
-                  setIsCharacterSelectOpen(!isCharacterSelectOpen)
-                  setIsHandCardsOpen(false)
+          {canSelectCharacter && (
+            <div>
+              <button
+                className={`action-button ${isCharacterSelectOpen ? "expanded" : ""}`}
+                onClick={() => {
+                  if (canSelectCharacter) {
+                    setIsCharacterSelectOpen(!isCharacterSelectOpen)
+                    setIsHandCardsOpen(false)
+                  }
+                }}
+                aria-label={
+                  isCharacterSelectOpen ? "Hide characters" : "Select character"
                 }
-              }}
-              aria-label={
-                isCharacterSelectOpen ? "Hide characters" : "Select character"
-              }
-              disabled={!canSelectCharacter}
-              title={
-                !phase
-                  ? "Game not started"
-                  : phase !== "CHARACTER_SELECTION"
-                    ? "Not character selection phase"
-                    : !isCharacterSelector
-                      ? "Not your turn to select"
-                      : character
-                        ? "Already selected character"
-                        : "Select your character"
-              }
-            >
-              {character?.icon || "👤"}
-            </button>
-            <div className="action-button-label">Character</div>
-          </div>
+                title="Select your character"
+              >
+                👤
+              </button>
+              <div className="action-button-label">Character</div>
+            </div>
+          )}
 
           <div>
             <button
@@ -264,33 +254,29 @@ function PlayerHand({
                 setIsCharacterSelectOpen(false)
               }}
               aria-label={isHandCardsOpen ? "Hide cards" : "Show cards"}
-              // Remove the disabled prop so players can always view their cards
             >
               📜
             </button>
             <div className="action-button-label">Cards ({cards.length})</div>
           </div>
 
-          <button
-            className="action-button special-ability"
-            onClick={() => onSpecialAbility?.()}
-            disabled={
-              !character ||
-              !onSpecialAbility ||
-              disabled ||
-              phase !== "PLAY_TURNS"
-            }
-            title={
-              disabled
-                ? "Not your turn"
-                : character
-                  ? getCharacterAbilityDescription(character)
-                  : "Select a character first"
-            }
-          >
-            <span className="ability-icon">{character?.icon}</span>
-            Use Ability
-          </button>
+          {character && (
+            <button
+              className="action-button special-ability"
+              onClick={() => onSpecialAbility?.()}
+              disabled={!onSpecialAbility || disabled || phase !== "PLAY_TURNS"}
+              title={
+                phase !== "PLAY_TURNS"
+                  ? "Wait for character selection to complete"
+                  : disabled
+                    ? "Not your turn"
+                    : getCharacterAbilityDescription(character)
+              }
+            >
+              <span className="ability-icon">{character.icon}</span>
+              Use Ability
+            </button>
+          )}
         </div>
       </div>
     </>
