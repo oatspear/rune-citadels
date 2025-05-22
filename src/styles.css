@@ -713,3 +713,29 @@ button:not([data-disabled]) {
   50% { transform: scale(1.2); }
   100% { transform: scale(1); }
 }
+
+.turn-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fade-out 3s forwards;
+}
+
+.turn-notification .character-icon {
+  font-size: 24px;
+}
+
+@keyframes fade-out {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}

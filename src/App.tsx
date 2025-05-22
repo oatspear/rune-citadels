@@ -7,6 +7,19 @@ import { CharacterTargetOverlay } from "./components/CharacterTargetOverlay"
 const MAX_PLAYERS = 4
 
 // Component interfaces and implementations
+interface TurnNotificationProps {
+  character: Character
+}
+
+function TurnNotification({ character }: TurnNotificationProps) {
+  return (
+    <div className="turn-notification">
+      <span className="character-icon">{character.icon}</span>
+      {character.name}&apos;s Turn
+    </div>
+  )
+}
+
 interface PlayerBoardProps {
   playerId?: string
   coins: number
@@ -322,12 +335,23 @@ const characters: Character[] = [
 function App() {
   const [game, setGame] = useState<GameState>()
   const [yourPlayerId, setYourPlayerId] = useState<PlayerId>()
+  const [showingTurn, setShowingTurn] = useState<Character | null>(null)
 
   useEffect(() => {
     Rune.initClient({
-      onChange: (params) => {
-        setGame(params.game)
-        setYourPlayerId(params.yourPlayerId)
+      onChange: ({ game, yourPlayerId }) => {
+        setGame(game)
+        setYourPlayerId(yourPlayerId)
+
+        const turnChar = game.currentCharacterId
+          ? characters.find((c) => c.id === game.currentCharacterId)
+          : null
+
+        if (turnChar && game.turnPhase === "PLAY_TURNS") {
+          setShowingTurn(turnChar)
+          // Hide the notification after 3 seconds
+          setTimeout(() => setShowingTurn(null), 3000)
+        }
       },
     })
   }, [])
@@ -467,6 +491,7 @@ function App() {
 
   return (
     <div className="game-container">
+      {showingTurn && <TurnNotification character={showingTurn} />}
       <div className="main-area">
         {game.targetSelection?.active && (
           <CharacterTargetOverlay
