@@ -134,7 +134,7 @@ function HandCardsList({
     <div className={`hand-cards-overlay ${isExpanded ? "expanded" : ""}`}>
       <div className="hand-cards-list">
         {cards.map((card) => {
-          const canBuild = 
+          const canBuild =
             phase === "PLAY_TURNS" && character && coins >= card.cost
           return (
             <div
@@ -191,7 +191,8 @@ function PlayerHand({
   const [isHandCardsOpen, setIsHandCardsOpen] = useState(false)
 
   // Helper to determine if character selection is allowed
-  const canSelectCharacter = phase === "CHARACTER_SELECTION" && isCharacterSelector && !character
+  const canSelectCharacter =
+    phase === "CHARACTER_SELECTION" && isCharacterSelector && !character
 
   return (
     <>
@@ -242,12 +243,12 @@ function PlayerHand({
                 !phase
                   ? "Game not started"
                   : phase !== "CHARACTER_SELECTION"
-                  ? "Not character selection phase"
-                  : !isCharacterSelector
-                  ? "Not your turn to select"
-                  : character
-                  ? "Already selected character"
-                  : "Select your character"
+                    ? "Not character selection phase"
+                    : !isCharacterSelector
+                      ? "Not your turn to select"
+                      : character
+                        ? "Already selected character"
+                        : "Select your character"
               }
             >
               {character?.icon || "👤"}
@@ -394,12 +395,12 @@ function App() {
 
     if (game.turnPhase === "CHARACTER_SELECTION") {
       // Get players in selection order
-      const selectionOrder = getCharacterSelectionOrder(game);
+      const selectionOrder = getCharacterSelectionOrder(game)
       // Find first player who hasn't selected a character yet
-      const currentSelector = selectionOrder.find(id => 
-        !game.playerStates[id].character
-      );
-      return playerId === currentSelector;
+      const currentSelector = selectionOrder.find(
+        (id) => !game.playerStates[id].character
+      )
+      return playerId === currentSelector
     }
 
     const playerState = game.playerStates[playerId]
