@@ -58,7 +58,6 @@ function PlayerBoard({
         <span className="player-name">
           {playerInfo ? playerInfo.displayName : "Waiting for player..."}
           {hasCrown && <span className="crown-indicator">👑</span>}
-          {isCurrentTurn && <span className="turn-indicator">🎯</span>}
           {isCharacterSelector && (
             <span className="selector-indicator">🎭</span>
           )}
@@ -471,7 +470,7 @@ function App() {
         {game.turnPhase === "CHARACTER_SELECTION" ? (
           <>
             <span className="character-icon">🎭</span>
-            Characters Being Selected
+            Select Characters
           </>
         ) : (
           game.currentCharacterId && (
