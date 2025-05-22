@@ -16,6 +16,7 @@ interface PlayerBoardProps {
   hasCrown: boolean
   isCurrentTurn: boolean
   isCharacterSelector?: boolean
+  game: GameState
 }
 
 function CityDistrict({ district }: { district: District }) {
@@ -40,8 +41,15 @@ function PlayerBoard({
   hasCrown,
   isCurrentTurn,
   isCharacterSelector,
+  game,
 }: PlayerBoardProps) {
   const playerInfo = playerId ? Rune.getPlayerInfo(playerId) : null
+  const isCharacterRevealed =
+    isCurrentPlayer || // Always show current player's character
+    (game.turnPhase === "PLAY_TURNS" &&
+      character &&
+      game.currentCharacterId >= character.id)
+  // Character is revealed when it's their turn or after
 
   return (
     <div
@@ -68,9 +76,13 @@ function PlayerBoard({
           <span className="coin-icon small">🪙</span> {coins}
         </div>
         {character && (
-          <div className="board-character">
-            <span className="character-icon small">{character.icon}</span>
-            {character.name}
+          <div
+            className={`board-character ${!isCharacterRevealed ? "hidden" : ""}`}
+          >
+            <span className="character-icon small">
+              {isCharacterRevealed ? character.icon : "❓"}
+            </span>
+            {isCharacterRevealed ? character.name : "Unknown"}
           </div>
         )}
       </div>
@@ -431,6 +443,7 @@ function App() {
           city: [],
           isCurrentTurn: false,
           isCharacterSelector: false,
+          game,
         } as PlayerBoardProps
       }
 
@@ -451,6 +464,7 @@ function App() {
         hasCrown: playerId === game.crownHolder,
         isCurrentTurn: playerId === getCurrentTurnPlayerId(),
         isCharacterSelector: playerId === currentSelector,
+        game,
       } as PlayerBoardProps
     })
     .sort((a, b) => {

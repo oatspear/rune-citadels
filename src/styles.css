@@ -728,3 +728,13 @@ button:not([data-disabled]) {
 .turn-status-bar .character-icon {
   font-size: 1.1rem;
 }
+
+.board-character.hidden {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.board-character.hidden .character-icon,
+.board-character.hidden .character-name {
+  opacity: 0.5;
+}
