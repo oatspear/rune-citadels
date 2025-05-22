@@ -319,7 +319,8 @@ const characters: Character[] = [
   { id: 8, name: "Warlord", icon: "⚔️" },
 ]
 
-function App() {  const [game, setGame] = useState<GameState>()
+function App() {
+  const [game, setGame] = useState<GameState>()
   const [yourPlayerId, setYourPlayerId] = useState<PlayerId>()
 
   useEffect(() => {
@@ -327,10 +328,6 @@ function App() {  const [game, setGame] = useState<GameState>()
       onChange: ({ game, yourPlayerId }) => {
         setGame(game)
         setYourPlayerId(yourPlayerId)
-
-        const turnChar = game.currentCharacterId
-          ? characters.find((c) => c.id === game.currentCharacterId)
-          : null        // Turn state is now shown in the permanent turn status bar
       },
     })
   }, [])
@@ -475,7 +472,8 @@ function App() {  const [game, setGame] = useState<GameState>()
           <span className="character-icon">
             {characters.find((c) => c.id === game.currentCharacterId)?.icon}
           </span>
-          {characters.find((c) => c.id === game.currentCharacterId)?.name}&apos;s Turn
+          {characters.find((c) => c.id === game.currentCharacterId)?.name}
+          &apos;s Turn
         </div>
       )}
       <div className="main-area">
@@ -522,7 +520,7 @@ function App() {  const [game, setGame] = useState<GameState>()
             ) === yourPlayerId
           }
         />
-        {canPlay && (
+        {canPlay && game.turnPhase === "PLAY_TURNS" && (
           <button
             className="end-turn-button"
             onClick={() => Rune.actions.endTurn(null)}

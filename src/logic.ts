@@ -96,7 +96,7 @@ const DISTRICTS: District[] = [
 ]
 
 // Constants
-const TURN_AUTO_ADVANCE_MS = 5000 // 5 seconds in milliseconds
+const TURN_AUTO_ADVANCE_MS = 3000 // 3 seconds in milliseconds
 
 // Helper functions
 function shuffle<T>(array: T[]): T[] {
