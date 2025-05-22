@@ -467,15 +467,24 @@ function App() {
 
   return (
     <div className="game-container">
-      {game.currentCharacterId && game.turnPhase === "PLAY_TURNS" && (
-        <div className="turn-status-bar">
-          <span className="character-icon">
-            {characters.find((c) => c.id === game.currentCharacterId)?.icon}
-          </span>
-          {characters.find((c) => c.id === game.currentCharacterId)?.name}
-          &apos;s Turn
-        </div>
-      )}
+      <div className="turn-status-bar">
+        {game.turnPhase === "CHARACTER_SELECTION" ? (
+          <>
+            <span className="character-icon">🎭</span>
+            Characters Being Selected
+          </>
+        ) : (
+          game.currentCharacterId && (
+            <>
+              <span className="character-icon">
+                {characters.find((c) => c.id === game.currentCharacterId)?.icon}
+              </span>
+              {characters.find((c) => c.id === game.currentCharacterId)?.name}
+              &apos;s Turn
+            </>
+          )
+        )}
+      </div>
       <div className="main-area">
         {game.targetSelection?.active && (
           <CharacterTargetOverlay
