@@ -714,28 +714,23 @@ button:not([data-disabled]) {
   100% { transform: scale(1); }
 }
 
-.turn-notification {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  z-index: 1000;
+
+
+.turn-status-bar {
+  width: 100%;
+  text-align: center;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  animation: fade-out 3s forwards;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
 }
 
-.turn-notification .character-icon {
-  font-size: 24px;
-}
-
-@keyframes fade-out {
-  0% { opacity: 1; }
-  70% { opacity: 1; }
-  100% { opacity: 0; }
+.turn-status-bar .character-icon {
+  font-size: 1.1rem;
 }

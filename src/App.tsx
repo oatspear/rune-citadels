@@ -7,19 +7,6 @@ import { CharacterTargetOverlay } from "./components/CharacterTargetOverlay"
 const MAX_PLAYERS = 4
 
 // Component interfaces and implementations
-interface TurnNotificationProps {
-  character: Character
-}
-
-function TurnNotification({ character }: TurnNotificationProps) {
-  return (
-    <div className="turn-notification">
-      <span className="character-icon">{character.icon}</span>
-      {character.name}&apos;s Turn
-    </div>
-  )
-}
-
 interface PlayerBoardProps {
   playerId?: string
   coins: number
@@ -332,10 +319,8 @@ const characters: Character[] = [
   { id: 8, name: "Warlord", icon: "⚔️" },
 ]
 
-function App() {
-  const [game, setGame] = useState<GameState>()
+function App() {  const [game, setGame] = useState<GameState>()
   const [yourPlayerId, setYourPlayerId] = useState<PlayerId>()
-  const [showingTurn, setShowingTurn] = useState<Character | null>(null)
 
   useEffect(() => {
     Rune.initClient({
@@ -345,13 +330,7 @@ function App() {
 
         const turnChar = game.currentCharacterId
           ? characters.find((c) => c.id === game.currentCharacterId)
-          : null
-
-        if (turnChar && game.turnPhase === "PLAY_TURNS") {
-          setShowingTurn(turnChar)
-          // Hide the notification after 3 seconds
-          setTimeout(() => setShowingTurn(null), 3000)
-        }
+          : null        // Turn state is now shown in the permanent turn status bar
       },
     })
   }, [])
@@ -491,7 +470,14 @@ function App() {
 
   return (
     <div className="game-container">
-      {showingTurn && <TurnNotification character={showingTurn} />}
+      {game.currentCharacterId && game.turnPhase === "PLAY_TURNS" && (
+        <div className="turn-status-bar">
+          <span className="character-icon">
+            {characters.find((c) => c.id === game.currentCharacterId)?.icon}
+          </span>
+          {characters.find((c) => c.id === game.currentCharacterId)?.name}&apos;s Turn
+        </div>
+      )}
       <div className="main-area">
         {game.targetSelection?.active && (
           <CharacterTargetOverlay
