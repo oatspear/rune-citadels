@@ -33,6 +33,7 @@ export interface GameState {
   currentCharacterId: number
   turnPhase: "CHARACTER_SELECTION" | "PLAY_TURNS"
   crownHolder?: PlayerId
+  lastTurnChange?: number // Timestamp when turn last changed
   assassinatedCharacterId?: number
   stolenCharacterId?: number
   targetSelection?: TargetSelectionState
@@ -94,6 +95,9 @@ const DISTRICTS: District[] = [
   { id: "fortress", name: "Fortress", type: "military", cost: 5 },
 ]
 
+// Constants
+const TURN_AUTO_ADVANCE_MS = 5000 // 5 seconds in milliseconds
+
 // Helper functions
 function shuffle<T>(array: T[]): T[] {
   const copy = [...array]
@@ -131,6 +135,14 @@ function advanceToNextCharacter(game: GameState): void {
       state.character = undefined
     })
   }
+  game.lastTurnChange = Rune.gameTime()
+}
+
+// Helper to check if any player has the given character
+function hasPlayerWithCharacter(game: GameState, characterId: number): boolean {
+  return Object.values(game.playerStates).some(
+    (state) => state.character?.id === characterId
+  )
 }
 
 // Define Rune client type globally
@@ -141,7 +153,7 @@ declare global {
 // Initialize game logic
 Rune.initLogic({
   minPlayers: 2,
-  maxPlayers: 2,
+  maxPlayers: 4,
   setup: (allPlayerIds: PlayerId[]): GameState => {
     // Shuffle the deck
     const shuffledDeck = shuffle([...DISTRICTS])
@@ -165,6 +177,7 @@ Rune.initLogic({
       currentCharacterId: 1,
       turnPhase: "CHARACTER_SELECTION",
       crownHolder,
+      lastTurnChange: Rune.gameTime(),
       assassinatedCharacterId: undefined,
       stolenCharacterId: undefined,
     }
@@ -196,6 +209,7 @@ Rune.initLogic({
       )
       if (allPlayersHaveCharacters) {
         game.turnPhase = "PLAY_TURNS"
+        game.lastTurnChange = Rune.gameTime()
       }
     },
 
@@ -345,5 +359,26 @@ Rune.initLogic({
       if (!isPlayerTurn(game, playerId)) throw Rune.invalidAction()
       advanceToNextCharacter(game)
     },
+  },
+
+  update: ({ game }): void => {
+    // Only run updates during PLAY_TURNS phase
+    if (game.turnPhase !== "PLAY_TURNS") return
+
+    // Skip if no current character (shouldn't happen, but just in case)
+    if (!game.currentCharacterId) return
+
+    // Skip if current character is assassinated (wait for manual advancement)
+    if (game.currentCharacterId === game.assassinatedCharacterId) return
+
+    // Skip if any player has the current character
+    if (hasPlayerWithCharacter(game, game.currentCharacterId)) return
+
+    // Check if enough time has passed since the last turn change
+    const timeSinceChange = Rune.gameTime() - (game.lastTurnChange || 0)
+    if (timeSinceChange >= TURN_AUTO_ADVANCE_MS) {
+      game.lastTurnChange = Rune.gameTime()
+      advanceToNextCharacter(game)
+    }
   },
 })
