@@ -259,6 +259,11 @@ button:not([data-disabled]) {
   box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
 }
 
+.player-board.character-selector {
+  border: 2px solid #9c27b0;
+  box-shadow: 0 0 8px rgba(156, 39, 176, 0.4);
+}
+
 .player-board-header {
   display: flex;
   align-items: center;
@@ -698,4 +703,16 @@ button:not([data-disabled]) {
   opacity: 1;
   pointer-events: auto;
   cursor: pointer;
+}
+
+.selector-indicator {
+  display: inline-block;
+  margin-left: 4px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }

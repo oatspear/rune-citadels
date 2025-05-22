@@ -15,6 +15,7 @@ interface PlayerBoardProps {
   city?: District[]
   hasCrown: boolean
   isCurrentTurn: boolean
+  isCharacterSelector?: boolean
 }
 
 function CityDistrict({ district }: { district: District }) {
@@ -38,6 +39,7 @@ function PlayerBoard({
   city = [],
   hasCrown,
   isCurrentTurn,
+  isCharacterSelector,
 }: PlayerBoardProps) {
   const playerInfo = playerId ? Rune.getPlayerInfo(playerId) : null
 
@@ -45,7 +47,7 @@ function PlayerBoard({
     <div
       className={`player-board ${isCurrentPlayer ? "current-player" : ""} ${
         isCurrentTurn ? "current-turn" : ""
-      }`}
+      } ${isCharacterSelector ? "character-selector" : ""}`}
     >
       <div className="player-board-header">
         {playerInfo ? (
@@ -57,6 +59,9 @@ function PlayerBoard({
           {playerInfo ? playerInfo.displayName : "Waiting for player..."}
           {hasCrown && <span className="crown-indicator">👑</span>}
           {isCurrentTurn && <span className="turn-indicator">🎯</span>}
+          {isCharacterSelector && (
+            <span className="selector-indicator">🎭</span>
+          )}
         </span>
       </div>
       <div className="player-board-stats">
@@ -129,8 +134,8 @@ function HandCardsList({
     <div className={`hand-cards-overlay ${isExpanded ? "expanded" : ""}`}>
       <div className="hand-cards-list">
         {cards.map((card) => {
-          const canBuild =
-            coins >= card.cost && phase === "PLAY_TURNS" && character
+          const canBuild = 
+            phase === "PLAY_TURNS" && character && coins >= card.cost
           return (
             <div
               key={card.id}
@@ -139,10 +144,10 @@ function HandCardsList({
               }`}
               onClick={() => canBuild && onSelect(card)}
               title={
-                !character
-                  ? "Select a character first"
-                  : phase !== "PLAY_TURNS"
-                    ? "Wait for character selection to complete"
+                phase !== "PLAY_TURNS"
+                  ? "Wait for character selection to complete"
+                  : !character
+                    ? "Select a character first"
                     : coins >= card.cost
                       ? `Build ${card.name} (${card.cost} coins)`
                       : `Not enough coins to build ${card.name} (need ${card.cost})`
@@ -169,6 +174,7 @@ function PlayerHand({
   onSpecialAbility,
   disabled,
   phase,
+  isCharacterSelector, // Add this prop
 }: {
   character?: Character
   onCharacterSelect: (character: Character) => void
@@ -179,17 +185,24 @@ function PlayerHand({
   onSpecialAbility?: () => void
   disabled?: boolean
   phase: "CHARACTER_SELECTION" | "PLAY_TURNS"
+  isCharacterSelector?: boolean // Add this prop
 }) {
   const [isCharacterSelectOpen, setIsCharacterSelectOpen] = useState(false)
   const [isHandCardsOpen, setIsHandCardsOpen] = useState(false)
+
+  // Helper to determine if character selection is allowed
+  const canSelectCharacter = phase === "CHARACTER_SELECTION" && isCharacterSelector && !character
 
   return (
     <>
       <CharacterSelect
         characters={availableCharacters}
         onSelect={(char) => {
-          onCharacterSelect(char)
-          setIsCharacterSelectOpen(false)
+          // Only allow selection if it's the player's turn
+          if (canSelectCharacter) {
+            onCharacterSelect(char)
+            setIsCharacterSelectOpen(false)
+          }
         }}
         isExpanded={isCharacterSelectOpen}
       />
@@ -215,13 +228,27 @@ function PlayerHand({
             <button
               className={`action-button ${isCharacterSelectOpen ? "expanded" : ""}`}
               onClick={() => {
-                setIsCharacterSelectOpen(!isCharacterSelectOpen)
-                setIsHandCardsOpen(false)
+                // Only toggle if selection is allowed
+                if (canSelectCharacter) {
+                  setIsCharacterSelectOpen(!isCharacterSelectOpen)
+                  setIsHandCardsOpen(false)
+                }
               }}
               aria-label={
                 isCharacterSelectOpen ? "Hide characters" : "Select character"
               }
-              disabled={phase !== "CHARACTER_SELECTION"}
+              disabled={!canSelectCharacter}
+              title={
+                !phase
+                  ? "Game not started"
+                  : phase !== "CHARACTER_SELECTION"
+                  ? "Not character selection phase"
+                  : !isCharacterSelector
+                  ? "Not your turn to select"
+                  : character
+                  ? "Already selected character"
+                  : "Select your character"
+              }
             >
               {character?.icon || "👤"}
             </button>
@@ -236,7 +263,7 @@ function PlayerHand({
                 setIsCharacterSelectOpen(false)
               }}
               aria-label={isHandCardsOpen ? "Hide cards" : "Show cards"}
-              disabled={disabled}
+              // Remove the disabled prop so players can always view their cards
             >
               📜
             </button>
@@ -342,6 +369,13 @@ function App() {
   }
 
   // Helper functions
+  const getCharacterSelectionOrder = (game: GameState): PlayerId[] => {
+    const crownPlayer = game.crownHolder
+    if (!crownPlayer) return game.playerIds
+    const orderedPlayers = game.playerIds.filter((id) => id !== crownPlayer)
+    return [crownPlayer, ...orderedPlayers]
+  }
+
   const getPlayerCharacters = () => {
     if (!game) return []
     return game.playerIds.map((playerId) => ({
@@ -355,14 +389,17 @@ function App() {
     return game.playerStates[yourPlayerId].character || null
   }
 
-  // Player turn checks
   const isPlayerTurn = (playerId: PlayerId): boolean => {
     if (!game || !playerId) return false
 
     if (game.turnPhase === "CHARACTER_SELECTION") {
-      // During character selection, crown holder goes first, then clockwise
-      // TODO: Implement proper character selection order
-      return true
+      // Get players in selection order
+      const selectionOrder = getCharacterSelectionOrder(game);
+      // Find first player who hasn't selected a character yet
+      const currentSelector = selectionOrder.find(id => 
+        !game.playerStates[id].character
+      );
+      return playerId === currentSelector;
     }
 
     const playerState = game.playerStates[playerId]
@@ -407,11 +444,17 @@ function App() {
           hasCrown: false,
           city: [],
           isCurrentTurn: false,
+          isCharacterSelector: false,
         } as PlayerBoardProps
       }
 
       const playerState = game.playerStates[playerId]
       const isCurrentPlayer = playerId === yourPlayerId
+      const currentSelector =
+        game.turnPhase === "CHARACTER_SELECTION" &&
+        getCharacterSelectionOrder(game).find(
+          (id) => !game.playerStates[id].character
+        )
 
       return {
         playerId,
@@ -421,6 +464,7 @@ function App() {
         isCurrentPlayer,
         hasCrown: playerId === game.crownHolder,
         isCurrentTurn: playerId === getCurrentTurnPlayerId(),
+        isCharacterSelector: playerId === currentSelector,
       } as PlayerBoardProps
     })
     .sort((a, b) => {
@@ -473,6 +517,12 @@ function App() {
           onSpecialAbility={canPlay ? handleSpecialAbility : undefined}
           disabled={!canPlay}
           phase={game.turnPhase}
+          isCharacterSelector={
+            game.turnPhase === "CHARACTER_SELECTION" &&
+            getCharacterSelectionOrder(game).find(
+              (id) => !game.playerStates[id].character
+            ) === yourPlayerId
+          }
         />
         {canPlay && (
           <button
