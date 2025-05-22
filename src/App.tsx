@@ -113,6 +113,8 @@ interface HandCardsListProps {
   coins: number
   onSelect: (card: District) => void
   isExpanded: boolean
+  phase: "CHARACTER_SELECTION" | "PLAY_TURNS"
+  character?: Character
 }
 
 function HandCardsList({
@@ -120,28 +122,38 @@ function HandCardsList({
   coins,
   onSelect,
   isExpanded,
+  phase,
+  character,
 }: HandCardsListProps) {
   return (
     <div className={`hand-cards-overlay ${isExpanded ? "expanded" : ""}`}>
       <div className="hand-cards-list">
-        {cards.map((card) => (
-          <div
-            key={card.id}
-            className={`district ${card.type} ${
-              coins >= card.cost ? "buildable" : "not-buildable"
-            }`}
-            onClick={() => coins >= card.cost && onSelect(card)}
-            title={
-              coins >= card.cost
-                ? `Build ${card.name} (${card.cost} coins)`
-                : `Not enough coins to build ${card.name} (need ${card.cost})`
-            }
-          >
-            <div className="district-cost">{card.cost}</div>
-            <div className="district-name">{card.name}</div>
-            <div className="district-type">{card.type}</div>
-          </div>
-        ))}
+        {cards.map((card) => {
+          const canBuild =
+            coins >= card.cost && phase === "PLAY_TURNS" && character
+          return (
+            <div
+              key={card.id}
+              className={`district ${card.type} ${
+                canBuild ? "buildable" : "not-buildable"
+              }`}
+              onClick={() => canBuild && onSelect(card)}
+              title={
+                !character
+                  ? "Select a character first"
+                  : phase !== "PLAY_TURNS"
+                    ? "Wait for character selection to complete"
+                    : coins >= card.cost
+                      ? `Build ${card.name} (${card.cost} coins)`
+                      : `Not enough coins to build ${card.name} (need ${card.cost})`
+              }
+            >
+              <div className="district-cost">{card.cost}</div>
+              <div className="district-name">{card.name}</div>
+              <div className="district-type">{card.type}</div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -186,12 +198,15 @@ function PlayerHand({
         cards={cards}
         coins={coins}
         onSelect={(card) => {
-          if (onCardSelect) {
+          // Only allow card selection if player has a character and it's play turn phase
+          if (onCardSelect && character && phase === "PLAY_TURNS") {
             onCardSelect(card)
           }
           setIsHandCardsOpen(false)
         }}
         isExpanded={isHandCardsOpen}
+        phase={phase}
+        character={character}
       />
 
       <div className="player-hand">
