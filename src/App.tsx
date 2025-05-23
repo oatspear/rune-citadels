@@ -550,7 +550,7 @@ function App() {
             setHasChosenResource(true)
           }}
           onChooseCards={() => {
-            // TODO: Implement drawing cards action
+            Rune.actions.drawCards({ keep: 1 }) // Draw top card, other card goes to bottom of deck
             setHasChosenResource(true)
           }}
           disabled={!canPlay}
