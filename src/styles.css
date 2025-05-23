@@ -430,6 +430,43 @@ button:not([data-disabled]) {
   flex: 0 0 auto;
 }
 
+.resource-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: rgba(74, 158, 255, 0.1);
+  border: 1px solid rgba(74, 158, 255, 0.2);
+  margin-bottom: 1rem;
+}
+
+.resource-button {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 0.5rem 1.5rem;
+  border-radius: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.resource-button:hover:not(:disabled) {
+  background: rgba(74, 158, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.resource-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
 .action-button {
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);

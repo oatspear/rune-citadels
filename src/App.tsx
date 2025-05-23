@@ -148,6 +148,23 @@ function HandCardsList({
   )
 }
 
+interface PlayerHandProps {
+  character?: Character
+  onCharacterSelect: (character: Character) => void
+  availableCharacters: Character[]
+  cards: District[]
+  coins: number
+  onCardSelect?: (card: District) => void
+  onSpecialAbility?: () => void
+  onChooseCoins?: () => void
+  onChooseCards?: () => void
+  disabled?: boolean
+  phase: "CHARACTER_SELECTION" | "PLAY_TURNS"
+  isCharacterSelector?: boolean
+  game: GameState
+  hasChosenResource: boolean
+}
+
 function PlayerHand({
   character,
   onCharacterSelect,
@@ -156,23 +173,14 @@ function PlayerHand({
   coins,
   onCardSelect,
   onSpecialAbility,
+  onChooseCoins,
+  onChooseCards,
   disabled,
   phase,
   isCharacterSelector,
-  game, // Add game prop
-}: {
-  character?: Character
-  onCharacterSelect: (character: Character) => void
-  availableCharacters: Character[]
-  cards: District[]
-  coins: number
-  onCardSelect?: (card: District) => void
-  onSpecialAbility?: () => void
-  disabled?: boolean
-  phase: "CHARACTER_SELECTION" | "PLAY_TURNS"
-  isCharacterSelector?: boolean
-  game: GameState // Add game prop type
-}) {
+  game,
+  hasChosenResource,
+}: PlayerHandProps) {
   const [isCharacterSelectOpen, setIsCharacterSelectOpen] = useState(false)
   const [isHandCardsOpen, setIsHandCardsOpen] = useState(false)
 
@@ -180,8 +188,33 @@ function PlayerHand({
   const canSelectCharacter =
     phase === "CHARACTER_SELECTION" && isCharacterSelector && !character
 
+  // Helper to determine if card selection is allowed
+  const canSelectCards =
+    phase === "PLAY_TURNS" && character && !disabled && hasChosenResource
+
   return (
     <>
+      {phase === "PLAY_TURNS" && !disabled && !hasChosenResource && (
+        <div className="resource-buttons">
+          <button
+            className="resource-button"
+            onClick={onChooseCoins}
+            title="Take 2 gold coins"
+          >
+            <span className="coin-icon">🪙</span>
+            Take Gold
+          </button>
+          <button
+            className="resource-button"
+            onClick={onChooseCards}
+            title="Draw 2 district cards and keep 1"
+          >
+            <span>📜</span>
+            Draw Cards
+          </button>
+        </div>
+      )}
+
       <CharacterSelect
         characters={availableCharacters}
         onSelect={(char) => {
@@ -200,8 +233,7 @@ function PlayerHand({
         cards={cards}
         coins={coins}
         onSelect={(card) => {
-          // Only allow card selection if player has a character and it's play turn phase
-          if (onCardSelect && character && phase === "PLAY_TURNS") {
+          if (canSelectCards && onCardSelect) {
             onCardSelect(card)
           }
           setIsHandCardsOpen(false)
@@ -298,6 +330,19 @@ function getCharacterAbilityDescription(character: Character): string {
 function App() {
   const [game, setGame] = useState<GameState>()
   const [yourPlayerId, setYourPlayerId] = useState<PlayerId>()
+  const [hasChosenResource, setHasChosenResource] = useState(false)
+
+  // Reset resource choice when a new turn starts
+  useEffect(() => {
+    if (game?.currentCharacterId && yourPlayerId) {
+      const isMyTurn =
+        game.playerStates[yourPlayerId]?.character?.id ===
+        game.currentCharacterId
+      if (!isMyTurn) {
+        setHasChosenResource(false)
+      }
+    }
+  }, [game?.currentCharacterId, game?.playerStates, yourPlayerId])
 
   useEffect(() => {
     Rune.initClient({
@@ -449,7 +494,7 @@ function App() {
         {game.turnPhase === "CHARACTER_SELECTION" ? (
           <>
             <span className="character-icon">🎭</span>
-            Select Characters ({game.availableCharacters.length} available)
+            Select Characters
           </>
         ) : (
           game.currentCharacterId && (
@@ -496,8 +541,18 @@ function App() {
           availableCharacters={availableCharacters}
           cards={currentPlayerState?.hand || []}
           coins={currentPlayerState?.coins || 0}
-          onCardSelect={canPlay ? handleCardSelect : undefined}
+          onCardSelect={
+            canPlay && hasChosenResource ? handleCardSelect : undefined
+          }
           onSpecialAbility={canPlay ? handleSpecialAbility : undefined}
+          onChooseCoins={() => {
+            // TODO: Implement taking coins action
+            setHasChosenResource(true)
+          }}
+          onChooseCards={() => {
+            // TODO: Implement drawing cards action
+            setHasChosenResource(true)
+          }}
           disabled={!canPlay}
           phase={game.turnPhase}
           isCharacterSelector={
@@ -507,8 +562,9 @@ function App() {
             ) === yourPlayerId
           }
           game={game}
+          hasChosenResource={hasChosenResource}
         />
-        {canPlay && game.turnPhase === "PLAY_TURNS" && (
+        {canPlay && game.turnPhase === "PLAY_TURNS" && hasChosenResource && (
           <button
             className="end-turn-button"
             onClick={() => Rune.actions.endTurn(null)}
