@@ -546,7 +546,7 @@ function App() {
           }
           onSpecialAbility={canPlay ? handleSpecialAbility : undefined}
           onChooseCoins={() => {
-            // TODO: Implement taking coins action
+            Rune.actions.takeCoins(null)
             setHasChosenResource(true)
           }}
           onChooseCards={() => {
