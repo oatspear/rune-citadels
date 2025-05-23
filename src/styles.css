@@ -42,6 +42,23 @@ html {
   max-height: 280px; /* Set a maximum height */
   display: flex;
   flex-direction: column;
+  transition: all 0.3s ease-out;
+}
+
+.bottom-area.your-turn {
+  background: #2a2a35;
+  box-shadow: 0 0 20px rgba(74, 158, 255, 0.2);
+  border-top-color: #4a9eff;
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(74, 158, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(74, 158, 255, 0.3);
+  }
 }
 
 .player-hand {

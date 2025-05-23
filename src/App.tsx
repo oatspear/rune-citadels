@@ -489,7 +489,7 @@ function App() {
           ))}
         </div>
       </div>
-      <div className="bottom-area">
+      <div className={`bottom-area ${canPlay ? "your-turn" : ""}`}>
         <PlayerHand
           character={currentPlayerState?.character}
           onCharacterSelect={handleCharacterSelect}
