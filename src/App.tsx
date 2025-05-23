@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react"
 import type { PlayerId } from "rune-sdk"
 import type { GameState, Character, District } from "./logic"
+import { CHARACTERS } from "./logic"
 import { CharacterTargetOverlay } from "./components/CharacterTargetOverlay"
+import { CharacterSelect } from "./components/CharacterSelect"
 
 // Constants
 const MAX_PLAYERS = 4
@@ -95,35 +97,6 @@ function PlayerBoard({
   )
 }
 
-interface CharacterSelectProps {
-  characters: Character[]
-  onSelect: (character: Character) => void
-  isExpanded: boolean
-}
-
-function CharacterSelect({
-  characters,
-  onSelect,
-  isExpanded,
-}: CharacterSelectProps) {
-  return (
-    <div className={`character-select-overlay ${isExpanded ? "expanded" : ""}`}>
-      <div className="character-grid">
-        {characters.map((character) => (
-          <div
-            key={character.id}
-            className="character-option"
-            onClick={() => onSelect(character)}
-          >
-            <span className="character-icon">{character.icon}</span>
-            <span className="character-name">{character.name}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 interface HandCardsListProps {
   cards: District[]
   coins: number
@@ -185,7 +158,8 @@ function PlayerHand({
   onSpecialAbility,
   disabled,
   phase,
-  isCharacterSelector, // Add this prop
+  isCharacterSelector,
+  game, // Add game prop
 }: {
   character?: Character
   onCharacterSelect: (character: Character) => void
@@ -196,7 +170,8 @@ function PlayerHand({
   onSpecialAbility?: () => void
   disabled?: boolean
   phase: "CHARACTER_SELECTION" | "PLAY_TURNS"
-  isCharacterSelector?: boolean // Add this prop
+  isCharacterSelector?: boolean
+  game: GameState // Add game prop type
 }) {
   const [isCharacterSelectOpen, setIsCharacterSelectOpen] = useState(false)
   const [isHandCardsOpen, setIsHandCardsOpen] = useState(false)
@@ -217,6 +192,8 @@ function PlayerHand({
           }
         }}
         isExpanded={isCharacterSelectOpen}
+        removedCharacterId={game.removedCharacterId}
+        unavailableCharacterId={game.unavailableCharacterId}
       />
 
       <HandCardsList
@@ -318,18 +295,6 @@ function getCharacterAbilityDescription(character: Character): string {
   }
 }
 
-// Available characters
-const characters: Character[] = [
-  { id: 1, name: "Assassin", icon: "🗡️" },
-  { id: 2, name: "Thief", icon: "🦹" },
-  { id: 3, name: "Magician", icon: "🧙" },
-  { id: 4, name: "King", icon: "👑" },
-  { id: 5, name: "Bishop", icon: "⛪" },
-  { id: 6, name: "Merchant", icon: "💰" },
-  { id: 7, name: "Architect", icon: "🏗️" },
-  { id: 8, name: "Warlord", icon: "⚔️" },
-]
-
 function App() {
   const [game, setGame] = useState<GameState>()
   const [yourPlayerId, setYourPlayerId] = useState<PlayerId>()
@@ -419,14 +384,14 @@ function App() {
 
   if (!game) return null
 
-  // Get available characters (not taken by other players)
+  // Get available characters that haven't been selected
   const takenCharacterIds = new Set(
     Object.values(game.playerStates)
       .map((state) => state.character?.id)
       .filter(Boolean)
   )
 
-  const availableCharacters = characters.filter(
+  const availableCharacters = game.availableCharacters.filter(
     (c) => !takenCharacterIds.has(c.id)
   )
 
@@ -484,15 +449,15 @@ function App() {
         {game.turnPhase === "CHARACTER_SELECTION" ? (
           <>
             <span className="character-icon">🎭</span>
-            Select Characters
+            Select Characters ({game.availableCharacters.length} available)
           </>
         ) : (
           game.currentCharacterId && (
             <>
               <span className="character-icon">
-                {characters.find((c) => c.id === game.currentCharacterId)?.icon}
+                {CHARACTERS.find((c) => c.id === game.currentCharacterId)?.icon}
               </span>
-              {characters.find((c) => c.id === game.currentCharacterId)?.name}
+              {CHARACTERS.find((c) => c.id === game.currentCharacterId)?.name}
               &apos;s Turn
             </>
           )
@@ -541,6 +506,7 @@ function App() {
               (id) => !game.playerStates[id].character
             ) === yourPlayerId
           }
+          game={game}
         />
         {canPlay && game.turnPhase === "PLAY_TURNS" && (
           <button

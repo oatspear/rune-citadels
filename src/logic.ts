@@ -37,6 +37,9 @@ export interface GameState {
   assassinatedCharacterId?: number
   stolenCharacterId?: number
   targetSelection?: TargetSelectionState
+  availableCharacters: Character[] // Add this field for available character tracking
+  removedCharacterId?: number // Track removed character
+  unavailableCharacterId?: number // Track marked unavailable character
 }
 
 // Action payloads
@@ -58,7 +61,7 @@ export type GameActions = {
 }
 
 // Available characters
-const CHARACTERS: Character[] = [
+export const CHARACTERS: Character[] = [
   { id: 1, name: "Assassin", icon: "🗡️" },
   { id: 2, name: "Thief", icon: "🦹" },
   { id: 3, name: "Magician", icon: "🧙" },
@@ -155,6 +158,9 @@ Rune.initLogic({
   minPlayers: 2,
   maxPlayers: 4,
   setup: (allPlayerIds: PlayerId[]): GameState => {
+    // Get available characters for this game
+    const { availableCharacters, removedCharacter, unavailableCharacter } = getAvailableCharacters()
+
     // Shuffle the deck
     const shuffledDeck = shuffle([...DISTRICTS])
 
@@ -180,6 +186,9 @@ Rune.initLogic({
       lastTurnChange: Rune.gameTime(),
       assassinatedCharacterId: undefined,
       stolenCharacterId: undefined,
+      availableCharacters,
+      removedCharacterId: removedCharacter.id,
+      unavailableCharacterId: unavailableCharacter.id,
     }
   },
   actions: {
@@ -194,7 +203,8 @@ Rune.initLogic({
     ): void => {
       if (game.turnPhase !== "CHARACTER_SELECTION") throw Rune.invalidAction()
 
-      const character = CHARACTERS.find((c) => c.id === characterId)
+      // Check if character is in available list
+      const character = game.availableCharacters.find((c) => c.id === characterId)
       if (!character) throw Rune.invalidAction()
 
       const isCharacterTaken = Object.values(game.playerStates).some(
@@ -382,3 +392,38 @@ Rune.initLogic({
     }
   },
 })
+
+// Helper functions
+interface AvailableCharactersResult {
+  availableCharacters: Character[]
+  removedCharacter: Character
+  unavailableCharacter: Character
+}
+
+function getAvailableCharacters(): AvailableCharactersResult {
+  const allCharacters = [...CHARACTERS]
+
+  // Remove a random character that isn't the King
+  const availableForRemoval = allCharacters.filter((c) => c.id !== 4) // Don't remove King
+  const removedIndex = Math.floor(Math.random() * availableForRemoval.length)
+  const removedCharacter = availableForRemoval[removedIndex]
+  const remainingCharacters = allCharacters.filter(
+    (c) => c.id !== removedCharacter.id
+  )
+
+  // Mark another non-King character as unavailable
+  const availableForUnavailable = remainingCharacters.filter((c) => c.id !== 4)
+  const unavailableIndex = Math.floor(Math.random() * availableForUnavailable.length)
+  const unavailableCharacter = availableForUnavailable[unavailableIndex]
+
+  // Return the final 6 available characters
+  const finalCharacters = remainingCharacters.filter(
+    (c) => c.id !== unavailableCharacter.id
+  )
+
+  return {
+    availableCharacters: finalCharacters,
+    removedCharacter,
+    unavailableCharacter,
+  }
+}

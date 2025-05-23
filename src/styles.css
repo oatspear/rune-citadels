@@ -395,6 +395,12 @@ button:not([data-disabled]) {
   text-align: center;
 }
 
+.character-option .character-status {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  font-style: italic;
+}
+
 .action-buttons {
   display: flex;
   gap: 1rem;
@@ -665,6 +671,35 @@ button:not([data-disabled]) {
   overflow-y: auto;
   max-height: 50vh;
   padding: 0.5rem;
+}
+
+.character-option.removed,
+.character-option.unavailable,
+.character-option.taken {
+  opacity: 0.5;
+  background: rgba(128, 128, 128, 0.1);
+  cursor: not-allowed;
+  position: relative;
+}
+
+.character-option.removed::after,
+.character-option.unavailable::after,
+.character-option.taken::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  content: "❌";
+  opacity: 0.5;
+}
+
+.character-status {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  font-style: italic;
+  display: block;
+  margin-top: 0.25rem;
 }
 
 .cancel-button {
