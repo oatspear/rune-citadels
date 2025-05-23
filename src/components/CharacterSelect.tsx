@@ -22,14 +22,19 @@ export function CharacterSelect({
           const isAvailable = characters.some((c) => c.id === character.id)
           const isRemoved = character.id === removedCharacterId
           const isUnavailable = character.id === unavailableCharacterId
-          
+
           return (
             <div
               key={character.id}
               className={`character-option ${isRemoved ? "removed" : ""} ${
                 isUnavailable ? "unavailable" : ""
               } ${!isAvailable ? "taken" : ""}`}
-              onClick={() => isAvailable && !isRemoved && !isUnavailable && onSelect(character)}
+              onClick={() =>
+                isAvailable &&
+                !isRemoved &&
+                !isUnavailable &&
+                onSelect(character)
+              }
               title={
                 isAvailable && !isRemoved && !isUnavailable
                   ? `Select ${character.name}`

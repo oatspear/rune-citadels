@@ -159,7 +159,8 @@ Rune.initLogic({
   maxPlayers: 4,
   setup: (allPlayerIds: PlayerId[]): GameState => {
     // Get available characters for this game
-    const { availableCharacters, removedCharacter, unavailableCharacter } = getAvailableCharacters()
+    const { availableCharacters, removedCharacter, unavailableCharacter } =
+      getAvailableCharacters()
 
     // Shuffle the deck
     const shuffledDeck = shuffle([...DISTRICTS])
@@ -204,7 +205,9 @@ Rune.initLogic({
       if (game.turnPhase !== "CHARACTER_SELECTION") throw Rune.invalidAction()
 
       // Check if character is in available list
-      const character = game.availableCharacters.find((c) => c.id === characterId)
+      const character = game.availableCharacters.find(
+        (c) => c.id === characterId
+      )
       if (!character) throw Rune.invalidAction()
 
       const isCharacterTaken = Object.values(game.playerStates).some(
@@ -413,7 +416,9 @@ function getAvailableCharacters(): AvailableCharactersResult {
 
   // Mark another non-King character as unavailable
   const availableForUnavailable = remainingCharacters.filter((c) => c.id !== 4)
-  const unavailableIndex = Math.floor(Math.random() * availableForUnavailable.length)
+  const unavailableIndex = Math.floor(
+    Math.random() * availableForUnavailable.length
+  )
   const unavailableCharacter = availableForUnavailable[unavailableIndex]
 
   // Return the final 6 available characters
