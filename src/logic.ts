@@ -125,10 +125,10 @@ function isPlayerTurn(game: GameState, playerId: PlayerId): boolean {
   const playerState = game.playerStates[playerId]
   if (!playerState?.character) return false
 
-  return (
-    playerState.character.id === game.currentCharacterId &&
-    playerState.character.id !== game.assassinatedCharacterId
-  )
+  // Never allow actions from assassinated characters
+  if (playerState.character.id === game.assassinatedCharacterId) return false
+
+  return playerState.character.id === game.currentCharacterId
 }
 
 function advanceToNextCharacter(game: GameState): void {
@@ -506,8 +506,14 @@ Rune.initLogic({
     // Skip if no current character (shouldn't happen, but just in case)
     if (!game.currentCharacterId) return
 
-    // Skip if current character is assassinated (wait for manual advancement)
-    if (game.currentCharacterId === game.assassinatedCharacterId) return
+    // Auto-advance if current character is assassinated
+    if (game.currentCharacterId === game.assassinatedCharacterId) {
+      const timeSinceChange = Rune.gameTime() - (game.lastTurnChange || 0)
+      if (timeSinceChange >= TURN_AUTO_ADVANCE_MS) {
+        advanceToNextCharacter(game)
+      }
+      return
+    }
 
     // Find current player if any
     const currentPlayer = Object.entries(game.playerStates).find(
