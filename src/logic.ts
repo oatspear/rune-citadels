@@ -28,6 +28,7 @@ export interface GameState {
       character?: Character
       hand: District[]
       city: District[]
+      districtsPlayedThisTurn: number
     }
   }
   deck: District[]
@@ -129,6 +130,11 @@ function isPlayerTurn(game: GameState, playerId: PlayerId): boolean {
 }
 
 function advanceToNextCharacter(game: GameState): void {
+  // Reset districts played for all players
+  Object.values(game.playerStates).forEach((state) => {
+    state.districtsPlayedThisTurn = 0
+  })
+
   game.currentCharacterId++
   if (game.currentCharacterId > 8) {
     game.currentCharacterId = 1
@@ -140,13 +146,6 @@ function advanceToNextCharacter(game: GameState): void {
     })
   }
   game.lastTurnChange = Rune.gameTime()
-}
-
-// Helper to check if any player has the given character
-function hasPlayerWithCharacter(game: GameState, characterId: number): boolean {
-  return Object.values(game.playerStates).some(
-    (state) => state.character?.id === characterId
-  )
 }
 
 // Define Rune client type globally
@@ -170,7 +169,7 @@ Rune.initLogic({
     const playerStates = Object.fromEntries(
       allPlayerIds.map((id) => {
         const hand = shuffledDeck.splice(0, 4)
-        return [id, { coins: 2, hand, city: [] }]
+        return [id, { coins: 2, hand, city: [], districtsPlayedThisTurn: 0 }]
       })
     )
 
@@ -355,9 +354,20 @@ Rune.initLogic({
       if (!district) throw Rune.invalidAction()
       if (playerState.coins < district.cost) throw Rune.invalidAction()
 
+      // Check for district playing limit based on character
+      const maxDistricts = playerState.character?.name === "Architect" ? 3 : 1
+      if (playerState.districtsPlayedThisTurn >= maxDistricts)
+        throw Rune.invalidAction()
+
       playerState.coins -= district.cost
       playerState.city.push(district)
       playerState.hand = playerState.hand.filter((d) => d.id !== districtId)
+      playerState.districtsPlayedThisTurn++
+
+      // If the player has reached their district limit, start the auto-end timer
+      if (playerState.districtsPlayedThisTurn >= maxDistricts) {
+        game.lastTurnChange = Rune.gameTime()
+      }
     },
 
     drawCards: (
@@ -420,13 +430,28 @@ Rune.initLogic({
     // Skip if current character is assassinated (wait for manual advancement)
     if (game.currentCharacterId === game.assassinatedCharacterId) return
 
-    // Skip if any player has the current character
-    if (hasPlayerWithCharacter(game, game.currentCharacterId)) return
+    // Find current player if any
+    const currentPlayer = Object.entries(game.playerStates).find(
+      ([, state]) => state.character?.id === game.currentCharacterId
+    )
 
-    // Check if enough time has passed since the last turn change
+    if (currentPlayer) {
+      const [, playerState] = currentPlayer
+      const maxDistricts = playerState.character?.name === "Architect" ? 3 : 1
+
+      // If player has reached their district limit, check for auto-end
+      if (playerState.districtsPlayedThisTurn >= maxDistricts) {
+        const timeSinceChange = Rune.gameTime() - (game.lastTurnChange || 0)
+        if (timeSinceChange >= TURN_AUTO_ADVANCE_MS) {
+          advanceToNextCharacter(game)
+        }
+      }
+      return
+    }
+
+    // If no player has this character, auto-advance after delay
     const timeSinceChange = Rune.gameTime() - (game.lastTurnChange || 0)
     if (timeSinceChange >= TURN_AUTO_ADVANCE_MS) {
-      game.lastTurnChange = Rune.gameTime()
       advanceToNextCharacter(game)
     }
   },
