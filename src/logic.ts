@@ -102,6 +102,7 @@ const DISTRICTS: District[] = [
 
 // Constants
 const TURN_AUTO_ADVANCE_MS = 3000 // 3 seconds in milliseconds
+const DISTRICTS_TO_WIN = 7
 
 // Helper functions
 function shuffle<T>(array: T[]): T[] {
@@ -137,6 +138,31 @@ function advanceToNextCharacter(game: GameState): void {
 
   game.currentCharacterId++
   if (game.currentCharacterId > 8) {
+    // Check for win condition at the end of the round
+    const scores = Object.entries(game.playerStates).map(
+      ([playerId, state]) => ({
+        playerId,
+        score: state.city.length,
+      })
+    )
+
+    // End game if any player has enough districts
+    if (scores.some((p) => p.score >= DISTRICTS_TO_WIN)) {
+      // Sort by district count (highest first)
+      scores.sort((a, b) => b.score - a.score)
+
+      // Convert to game over format
+      const results: Record<PlayerId, number> = {}
+      scores.forEach(({ playerId, score }) => {
+        results[playerId] = score
+      })
+
+      Rune.gameOver({
+        players: results,
+      })
+      return
+    }
+
     game.currentCharacterId = 1
     game.turnPhase = "CHARACTER_SELECTION"
     game.assassinatedCharacterId = undefined
