@@ -140,15 +140,40 @@ function advanceToNextCharacter(game: GameState): void {
   if (game.currentCharacterId > 8) {
     // Check for win condition at the end of the round
     const scores = Object.entries(game.playerStates).map(
-      ([playerId, state]) => ({
-        playerId,
-        score: state.city.length,
-      })
+      ([playerId, state]) => {
+        // Base score is sum of district costs
+        const costScore = state.city.reduce(
+          (sum, district) => sum + district.cost,
+          0
+        )
+
+        // Check for color bonus (3 points for having all types)
+        const districtTypes = new Set(state.city.map((d) => d.type))
+        const colorBonus = districtTypes.size === 5 ? 3 : 0 // 5 types: noble, religious, trade, military, unique
+
+        // Check if this player has completed their city
+        const isCompleted = state.city.length >= DISTRICTS_TO_WIN
+
+        return {
+          playerId,
+          score: costScore + colorBonus,
+          isCompleted,
+          rawScore: costScore,
+          hasColorBonus: colorBonus > 0,
+        }
+      }
     )
 
     // End game if any player has enough districts
-    if (scores.some((p) => p.score >= DISTRICTS_TO_WIN)) {
-      // Sort by district count (highest first)
+    if (scores.some((p) => p.isCompleted)) {
+      // Add completion bonus to the first player who completed their city
+      // Only one player can get this bonus
+      const firstCompleted = scores.find((p) => p.isCompleted)
+      if (firstCompleted) {
+        firstCompleted.score += 4 // Completion bonus
+      }
+
+      // Sort by total score (highest first)
       scores.sort((a, b) => b.score - a.score)
 
       // Convert to game over format
