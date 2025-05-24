@@ -211,7 +211,7 @@ function PlayerHand({
             title="Draw 2 district cards and keep 1"
           >
             <span>📜</span>
-            Draw Cards
+            Draw Cards ({game.deck.length})
           </button>
         </div>
       )}
