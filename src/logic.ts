@@ -29,6 +29,7 @@ export interface GameState {
       hand: District[]
       city: District[]
       districtsPlayedThisTurn: number
+      hasUsedAbility: boolean
     }
   }
   deck: District[]
@@ -131,9 +132,10 @@ function isPlayerTurn(game: GameState, playerId: PlayerId): boolean {
 }
 
 function advanceToNextCharacter(game: GameState): void {
-  // Reset districts played for all players
+  // Reset districts played and ability usage for all players
   Object.values(game.playerStates).forEach((state) => {
     state.districtsPlayedThisTurn = 0
+    state.hasUsedAbility = false
   })
 
   game.currentCharacterId++
@@ -220,7 +222,16 @@ Rune.initLogic({
     const playerStates = Object.fromEntries(
       allPlayerIds.map((id) => {
         const hand = shuffledDeck.splice(0, 4)
-        return [id, { coins: 2, hand, city: [], districtsPlayedThisTurn: 0 }]
+        return [
+          id,
+          {
+            coins: 2,
+            hand,
+            city: [],
+            districtsPlayedThisTurn: 0,
+            hasUsedAbility: false,
+          },
+        ]
       })
     )
 
@@ -286,6 +297,11 @@ Rune.initLogic({
       const playerState = game.playerStates[playerId]
       if (!playerState?.character) throw Rune.invalidAction()
 
+      // Mark ability as used for targeting abilities only when target is selected
+      if (payload !== null) {
+        playerState.hasUsedAbility = true
+      }
+
       switch (playerState.character.name) {
         case "Assassin": {
           if (payload?.targetCharacterId) {
@@ -339,6 +355,8 @@ Rune.initLogic({
             (d) => d.type === "noble"
           ).length
           playerState.coins += nobleDistrictCount
+          // Mark passive abilities as used immediately
+          playerState.hasUsedAbility = true
           break
         }
 
@@ -347,6 +365,8 @@ Rune.initLogic({
             (d) => d.type === "religious"
           ).length
           playerState.coins += religiousDistrictCount
+          // Mark passive abilities as used immediately
+          playerState.hasUsedAbility = true
           break
         }
 
@@ -356,6 +376,8 @@ Rune.initLogic({
             (d) => d.type === "trade"
           ).length
           playerState.coins += tradeDistrictCount
+          // Mark passive abilities as used immediately
+          playerState.hasUsedAbility = true
           break
         }
 
@@ -363,6 +385,8 @@ Rune.initLogic({
           const drawCount = Math.min(2, game.deck.length)
           const drawnCards = game.deck.splice(0, drawCount)
           playerState.hand.push(...drawnCards)
+          // Mark passive abilities as used immediately
+          playerState.hasUsedAbility = true
           break
         }
 
@@ -384,6 +408,10 @@ Rune.initLogic({
               (d) => d.type === "military"
             ).length
             playerState.coins += militaryDistrictCount
+            // Only mark as used if not going into targeting mode
+            if (militaryDistrictCount === 0) {
+              playerState.hasUsedAbility = true
+            }
             game.targetSelection = {
               type: "warlord",
               active: true,
@@ -490,8 +518,11 @@ Rune.initLogic({
       const [, playerState] = currentPlayer
       const maxDistricts = playerState.character?.name === "Architect" ? 3 : 1
 
-      // If player has reached their district limit, check for auto-end
-      if (playerState.districtsPlayedThisTurn >= maxDistricts) {
+      // Check if turn should auto-end (reached district limit AND used ability)
+      const hasReachedDistrictLimit =
+        playerState.districtsPlayedThisTurn >= maxDistricts
+
+      if (hasReachedDistrictLimit && playerState.hasUsedAbility) {
         const timeSinceChange = Rune.gameTime() - (game.lastTurnChange || 0)
         if (timeSinceChange >= TURN_AUTO_ADVANCE_MS) {
           advanceToNextCharacter(game)
