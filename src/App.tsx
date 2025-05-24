@@ -4,6 +4,7 @@ import type { GameState, Character, District } from "./logic"
 import { CHARACTERS } from "./logic"
 import { CharacterTargetOverlay } from "./components/CharacterTargetOverlay"
 import { CharacterSelect } from "./components/CharacterSelect"
+import { CardSelectOverlay } from "./components/CardSelectOverlay"
 
 // Constants
 const MAX_PLAYERS = 4
@@ -509,24 +510,35 @@ function App() {
         )}
       </div>
       <div className="main-area">
-        {game.targetSelection?.active && (
-          <CharacterTargetOverlay
-            targetSelection={game.targetSelection}
-            players={getPlayerCharacters()}
-            onSelect={(targetId, districtId) => {
-              if (districtId) {
-                Rune.actions.useCharacterAbility({
-                  targetDistrictId: districtId,
-                })
-              } else {
-                Rune.actions.useCharacterAbility({
-                  targetCharacterId: targetId,
-                })
-              }
+        {game.targetSelection?.active &&
+        game.targetSelection.type === "draw_cards" ? (
+          <CardSelectOverlay
+            cards={game.targetSelection.cards ?? []}
+            onSelect={(card, index) => {
+              Rune.actions.drawCards({ cardIndex: index })
             }}
-            onCancel={handleCharacterTargetCancel}
-            currentCharacter={getCurrentCharacter()}
+            active={true}
           />
+        ) : (
+          game.targetSelection?.active && (
+            <CharacterTargetOverlay
+              targetSelection={game.targetSelection}
+              players={getPlayerCharacters()}
+              onSelect={(targetId, districtId) => {
+                if (districtId) {
+                  Rune.actions.useCharacterAbility({
+                    targetDistrictId: districtId,
+                  })
+                } else {
+                  Rune.actions.useCharacterAbility({
+                    targetCharacterId: targetId,
+                  })
+                }
+              }}
+              onCancel={handleCharacterTargetCancel}
+              currentCharacter={getCurrentCharacter()}
+            />
+          )
         )}
         <div className="game-boards">
           {playerSlots.map((player, index) => (
@@ -550,7 +562,7 @@ function App() {
             setHasChosenResource(true)
           }}
           onChooseCards={() => {
-            Rune.actions.drawCards({ keep: 1 }) // Draw top card, other card goes to bottom of deck
+            Rune.actions.drawCards({}) // Start the draw process without selecting a card
             setHasChosenResource(true)
           }}
           disabled={!canPlay}

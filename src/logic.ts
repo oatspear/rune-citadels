@@ -2,8 +2,9 @@ import type { PlayerId, RuneClient } from "rune-sdk"
 
 // Type definitions for the game state
 export interface TargetSelectionState {
-  type: "assassin" | "thief" | "magician" | "warlord"
+  type: "assassin" | "thief" | "magician" | "warlord" | "draw_cards"
   active: boolean
+  cards?: District[] // For storing drawn cards during card selection
 }
 
 export interface Character {
@@ -51,7 +52,7 @@ interface ActionPayloads {
     targetDistrictId?: string
   } | null
   playDistrict: { districtId: string }
-  drawCards: { keep: number }
+  drawCards: { cardIndex?: number }
   endTurn: null
 }
 
@@ -359,13 +360,48 @@ Rune.initLogic({
       playerState.hand = playerState.hand.filter((d) => d.id !== districtId)
     },
 
-    drawCards: ({ keep }: { keep: number }, { game, playerId }): void => {
+    drawCards: (
+      { cardIndex }: { cardIndex?: number },
+      { game, playerId }
+    ): void => {
       if (!isPlayerTurn(game, playerId)) throw Rune.invalidAction()
 
       const playerState = game.playerStates[playerId]
-      const drawCount = Math.min(keep, game.deck.length)
-      const drawnCards = game.deck.splice(0, drawCount)
-      playerState.hand.push(...drawnCards)
+
+      // If cardIndex is undefined, we're starting the draw process
+      if (cardIndex === undefined) {
+        const drawCount = Math.min(2, game.deck.length)
+        const drawnCards = game.deck.splice(0, drawCount)
+        game.targetSelection = {
+          type: "draw_cards",
+          active: true,
+          cards: drawnCards,
+        }
+      } else {
+        // Player has chosen which card to keep
+        if (
+          !game.targetSelection?.cards ||
+          game.targetSelection.type !== "draw_cards"
+        ) {
+          throw Rune.invalidAction()
+        }
+
+        const drawnCards = game.targetSelection.cards
+        const keptCard = drawnCards[cardIndex]
+        if (!keptCard) throw Rune.invalidAction()
+
+        // Add the chosen card to player's hand
+        playerState.hand.push(keptCard)
+
+        // Put the other card at the bottom of the deck
+        const otherCard = drawnCards[cardIndex === 0 ? 1 : 0]
+        if (otherCard) {
+          game.deck.push(otherCard)
+        }
+
+        // Clear the target selection
+        game.targetSelection = undefined
+      }
     },
 
     endTurn: (_payload: null, { game, playerId }): void => {
