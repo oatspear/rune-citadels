@@ -332,6 +332,11 @@ function App() {
   const [game, setGame] = useState<GameState>()
   const [yourPlayerId, setYourPlayerId] = useState<PlayerId>()
   const [hasChosenResource, setHasChosenResource] = useState(false)
+  const [localUIState, setLocalUIState] = useState<{
+    type: "assassin" | "thief" | "magician" | "warlord" | "draw_cards"
+    active: boolean
+    cards?: District[]
+  } | null>(null)
 
   // Reset resource choice when a new turn starts
   useEffect(() => {
@@ -350,9 +355,20 @@ function App() {
       onChange: ({ game, yourPlayerId }) => {
         setGame(game)
         setYourPlayerId(yourPlayerId)
+
+        // Handle drawn cards overlay
+        if (yourPlayerId && game?.playerStates[yourPlayerId]?.drawnCards) {
+          setLocalUIState({
+            type: "draw_cards",
+            active: true,
+            cards: game.playerStates[yourPlayerId].drawnCards,
+          })
+        } else if (localUIState?.type === "draw_cards") {
+          setLocalUIState(null)
+        }
       },
     })
-  }, [])
+  }, [localUIState?.type])
 
   // Handlers for game actions
   const handleCardSelect = (district: District) => {
@@ -369,12 +385,41 @@ function App() {
 
   const handleSpecialAbility = () => {
     if (!yourPlayerId || !game) return
-    Rune.actions.useCharacterAbility(null)
+    const character = game.playerStates[yourPlayerId].character
+    if (!character) return
+
+    // Show target selection overlay based on character
+    switch (character.name) {
+      case "Assassin":
+        setLocalUIState({ type: "assassin", active: true })
+        break
+      case "Thief":
+        setLocalUIState({ type: "thief", active: true })
+        break
+      case "Magician":
+        setLocalUIState({ type: "magician", active: true })
+        break
+      case "Warlord": {
+        const militaryDistricts = game.playerStates[yourPlayerId].city.filter(
+          (d) => d.type === "military"
+        ).length
+        if (militaryDistricts > 0) {
+          setLocalUIState({ type: "warlord", active: true })
+        } else {
+          // Just trigger ability without targeting
+          Rune.actions.useCharacterAbility(null)
+        }
+        break
+      }
+      default:
+        // For characters without targeting (King, Bishop, Merchant, Architect)
+        Rune.actions.useCharacterAbility(null)
+        break
+    }
   }
 
   const handleCharacterTargetCancel = () => {
-    if (!yourPlayerId || !game?.targetSelection?.active) return
-    Rune.actions.useCharacterAbility(null)
+    setLocalUIState(null)
   }
 
   // Helper functions
@@ -510,19 +555,19 @@ function App() {
         )}
       </div>
       <div className="main-area">
-        {game.targetSelection?.active &&
-        game.targetSelection.type === "draw_cards" ? (
-          <CardSelectOverlay
-            cards={game.targetSelection.cards ?? []}
-            onSelect={(card, index) => {
-              Rune.actions.drawCards({ cardIndex: index })
-            }}
-            active={true}
-          />
-        ) : (
-          game.targetSelection?.active && (
+        {localUIState?.active ? (
+          localUIState.type === "draw_cards" ? (
+            <CardSelectOverlay
+              cards={localUIState.cards ?? []}
+              onSelect={(_, index) => {
+                Rune.actions.drawCards({ cardIndex: index })
+                setLocalUIState(null)
+              }}
+              active={true}
+            />
+          ) : (
             <CharacterTargetOverlay
-              targetSelection={game.targetSelection}
+              targetSelection={localUIState}
               players={getPlayerCharacters()}
               onSelect={(targetId, districtId) => {
                 if (districtId) {
@@ -534,12 +579,13 @@ function App() {
                     targetCharacterId: targetId,
                   })
                 }
+                setLocalUIState(null)
               }}
               onCancel={handleCharacterTargetCancel}
               currentCharacter={getCurrentCharacter()}
             />
           )
-        )}
+        ) : null}
         <div className="game-boards">
           {playerSlots.map((player, index) => (
             <PlayerBoard key={index} {...player} />
@@ -562,7 +608,8 @@ function App() {
             setHasChosenResource(true)
           }}
           onChooseCards={() => {
-            Rune.actions.drawCards({}) // Start the draw process without selecting a card
+            // Initiate the card drawing process by calling the action with no cardIndex
+            Rune.actions.drawCards({})
             setHasChosenResource(true)
           }}
           disabled={!canPlay}

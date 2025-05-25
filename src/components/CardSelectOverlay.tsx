@@ -19,9 +19,10 @@ export function CardSelectOverlay({
       <div className="card-select-cards">
         {cards.map((card, index) => (
           <div
-            key={card.id}
+            key={`${card.id}-${index}`}
             className={`district ${card.type}`}
             onClick={() => onSelect(card, index)}
+            title={`Keep ${card.name}`}
           >
             <div className="district-cost">{card.cost}</div>
             <div className="district-name">{card.name}</div>

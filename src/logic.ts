@@ -30,6 +30,7 @@ export interface GameState {
       city: District[]
       districtsPlayedThisTurn: number
       hasUsedAbility: boolean
+      drawnCards?: District[] // Temporary storage for cards being chosen from
     }
   }
   deck: District[]
@@ -39,7 +40,6 @@ export interface GameState {
   lastTurnChange?: number // Timestamp when turn last changed
   assassinatedCharacterId?: number
   stolenCharacterId?: number
-  targetSelection?: TargetSelectionState
   availableCharacters: Character[] // Add this field for available character tracking
   removedCharacterId?: number // Track removed character
   unavailableCharacterId?: number // Track marked unavailable character
@@ -297,27 +297,11 @@ Rune.initLogic({
       const playerState = game.playerStates[playerId]
       if (!playerState?.character) throw Rune.invalidAction()
 
-      // If payload is null and there's an active target selection, just clear it
-      if (payload === null && game.targetSelection?.active) {
-        game.targetSelection = undefined
-        return
-      }
-
-      // Mark ability as used for targeting abilities only when target is selected
-      if (payload !== null) {
-        playerState.hasUsedAbility = true
-      }
-
       switch (playerState.character.name) {
         case "Assassin": {
           if (payload?.targetCharacterId) {
             game.assassinatedCharacterId = payload.targetCharacterId
-            game.targetSelection = undefined
-          } else {
-            game.targetSelection = {
-              type: "assassin",
-              active: true,
-            }
+            playerState.hasUsedAbility = true
           }
           break
         }
@@ -325,12 +309,7 @@ Rune.initLogic({
         case "Thief": {
           if (payload?.targetCharacterId) {
             game.stolenCharacterId = payload.targetCharacterId
-            game.targetSelection = undefined
-          } else {
-            game.targetSelection = {
-              type: "thief",
-              active: true,
-            }
+            playerState.hasUsedAbility = true
           }
           break
         }
@@ -344,12 +323,7 @@ Rune.initLogic({
               const tempHand = playerState.hand
               playerState.hand = targetState.hand
               targetState.hand = tempHand
-            }
-            game.targetSelection = undefined
-          } else {
-            game.targetSelection = {
-              type: "magician",
-              active: true,
+              playerState.hasUsedAbility = true
             }
           }
           break
@@ -361,7 +335,6 @@ Rune.initLogic({
             (d) => d.type === "noble"
           ).length
           playerState.coins += nobleDistrictCount
-          // Mark passive abilities as used immediately
           playerState.hasUsedAbility = true
           break
         }
@@ -371,7 +344,6 @@ Rune.initLogic({
             (d) => d.type === "religious"
           ).length
           playerState.coins += religiousDistrictCount
-          // Mark passive abilities as used immediately
           playerState.hasUsedAbility = true
           break
         }
@@ -382,7 +354,6 @@ Rune.initLogic({
             (d) => d.type === "trade"
           ).length
           playerState.coins += tradeDistrictCount
-          // Mark passive abilities as used immediately
           playerState.hasUsedAbility = true
           break
         }
@@ -391,7 +362,6 @@ Rune.initLogic({
           const drawCount = Math.min(2, game.deck.length)
           const drawnCards = game.deck.splice(0, drawCount)
           playerState.hand.push(...drawnCards)
-          // Mark passive abilities as used immediately
           playerState.hasUsedAbility = true
           break
         }
@@ -405,10 +375,10 @@ Rune.initLogic({
               if (districtIndex >= 0) {
                 const [district] = pState.city.splice(districtIndex, 1)
                 game.playerStates[pid].coins += Math.floor(district.cost / 2)
+                playerState.hasUsedAbility = true
                 break
               }
             }
-            game.targetSelection = undefined
           } else {
             const militaryDistrictCount = playerState.city.filter(
               (d) => d.type === "military"
@@ -417,10 +387,6 @@ Rune.initLogic({
             // Only mark as used if not going into targeting mode
             if (militaryDistrictCount === 0) {
               playerState.hasUsedAbility = true
-            }
-            game.targetSelection = {
-              type: "warlord",
-              active: true,
             }
           }
           break
@@ -467,21 +433,14 @@ Rune.initLogic({
       if (cardIndex === undefined) {
         const drawCount = Math.min(2, game.deck.length)
         const drawnCards = game.deck.splice(0, drawCount)
-        game.targetSelection = {
-          type: "draw_cards",
-          active: true,
-          cards: drawnCards,
-        }
+        playerState.drawnCards = drawnCards // Store drawn cards in player state
       } else {
         // Player has chosen which card to keep
-        if (
-          !game.targetSelection?.cards ||
-          game.targetSelection.type !== "draw_cards"
-        ) {
+        if (!playerState.drawnCards?.length) {
           throw Rune.invalidAction()
         }
 
-        const drawnCards = game.targetSelection.cards
+        const drawnCards = playerState.drawnCards
         const keptCard = drawnCards[cardIndex]
         if (!keptCard) throw Rune.invalidAction()
 
@@ -494,8 +453,8 @@ Rune.initLogic({
           game.deck.push(otherCard)
         }
 
-        // Clear the target selection
-        game.targetSelection = undefined
+        // Clear the drawn cards
+        playerState.drawnCards = undefined
       }
     },
 
