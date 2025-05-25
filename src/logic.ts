@@ -297,6 +297,12 @@ Rune.initLogic({
       const playerState = game.playerStates[playerId]
       if (!playerState?.character) throw Rune.invalidAction()
 
+      // If payload is null and there's an active target selection, just clear it
+      if (payload === null && game.targetSelection?.active) {
+        game.targetSelection = undefined
+        return
+      }
+
       // Mark ability as used for targeting abilities only when target is selected
       if (payload !== null) {
         playerState.hasUsedAbility = true
