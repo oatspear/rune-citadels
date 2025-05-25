@@ -432,9 +432,39 @@ function App() {
 
   const getPlayerCharacters = () => {
     if (!game) return []
+
+    if (localUIState?.type === "assassin" || localUIState?.type === "thief") {
+      // For Assassin/Thief, show all possible target characters
+      return CHARACTERS.filter((char) => {
+        // Filter based on ability
+        if (localUIState.type === "assassin") {
+          // Can target characters 2-8, except removed/unavailable
+          return (
+            char.id > 1 &&
+            char.id !== game.removedCharacterId &&
+            char.id !== game.unavailableCharacterId
+          )
+        } else {
+          // Thief: can target characters 3-8 except removed/unavailable/assassinated
+          return (
+            char.id > 2 &&
+            char.id !== game.removedCharacterId &&
+            char.id !== game.unavailableCharacterId &&
+            char.id !== game.assassinatedCharacterId &&
+            char.id !== 1 // Never target Assassin
+          )
+        }
+      }).map((char) => ({
+        playerId: "", // Empty string as we don't know who has this character
+        character: char,
+      }))
+    }
+
+    // For other abilities (Warlord, Magician), use actual player states
     return game.playerIds.map((playerId) => ({
       playerId,
       character: game.playerStates[playerId].character,
+      districts: game.playerStates[playerId].city, // Include districts for Warlord
     }))
   }
 
@@ -568,7 +598,35 @@ function App() {
           ) : (
             <CharacterTargetOverlay
               targetSelection={localUIState}
-              players={getPlayerCharacters()}
+              players={
+                localUIState.type === "assassin" ||
+                localUIState.type === "thief"
+                  ? // For Assassin/Thief, show valid potential targets
+                    CHARACTERS.filter((char) => {
+                      if (localUIState.type === "assassin") {
+                        // Can target characters 2-8, except removed/unavailable
+                        return (
+                          char.id > 1 &&
+                          char.id !== game.removedCharacterId &&
+                          char.id !== game.unavailableCharacterId
+                        )
+                      } else {
+                        // Thief: can target characters 3-8 except removed/unavailable/assassinated
+                        return (
+                          char.id > 2 &&
+                          char.id !== game.removedCharacterId &&
+                          char.id !== game.unavailableCharacterId &&
+                          char.id !== game.assassinatedCharacterId &&
+                          char.id !== 1 // Never target Assassin
+                        )
+                      }
+                    }).map((char) => ({
+                      playerId: "", // Empty string as we don't know who has this character
+                      character: char,
+                    }))
+                  : // For other abilities (Warlord, Magician), use actual player states
+                    getPlayerCharacters()
+              }
               onSelect={(targetId, districtId) => {
                 if (districtId) {
                   Rune.actions.useCharacterAbility({
