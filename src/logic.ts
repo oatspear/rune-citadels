@@ -431,6 +431,11 @@ Rune.initLogic({
                 (d) => d.id === payload.targetDistrictId
               )
               if (districtIndex >= 0) {
+                // Can't target districts in a completed city
+                if (pState.city.length >= DISTRICTS_TO_WIN) {
+                  throw Rune.invalidAction() // Can't target districts in completed cities
+                }
+
                 // Can't target Bishop's districts unless they were assassinated
                 if (
                   pState.character?.id === 5 &&
