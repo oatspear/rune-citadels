@@ -499,6 +499,11 @@ function App() {
   const getCurrentTurnPlayerId = (): PlayerId | undefined => {
     if (!game) return undefined
 
+    // Skip assassinated character
+    if (game.currentCharacterId === game.assassinatedCharacterId) {
+      return undefined
+    }
+
     return Object.entries(game.playerStates).find(
       ([, state]) => state.character?.id === game.currentCharacterId
     )?.[0]
