@@ -11,6 +11,7 @@ interface CharacterTargetOverlayProps {
   onSelect: (characterId: number, districtId?: string) => void
   onCancel: () => void
   currentCharacter: Character | null
+  assassinatedCharacterId?: number
 }
 
 export function CharacterTargetOverlay({
@@ -19,6 +20,7 @@ export function CharacterTargetOverlay({
   onSelect,
   onCancel,
   currentCharacter,
+  assassinatedCharacterId,
 }: CharacterTargetOverlayProps) {
   const getTitle = () => {
     switch (targetSelection.type) {
@@ -59,14 +61,25 @@ export function CharacterTargetOverlay({
   const getValidDistricts = () => {
     if (targetSelection.type !== "warlord") return []
 
-    return players
-      .filter((p) => p.character?.id !== 5) // Can't target Bishop's districts
+    // Get all valid target districts (excluding completed cities and protected Bishop's districts)
+    const validTargets = players
+      .filter(
+        (p) =>
+          // Can target Bishop's districts if Bishop was assassinated
+          p.character?.id !== 5 || assassinatedCharacterId === 5
+      )
+      .filter((p) => (p.districts?.length ?? 0) < 7) // Can't target completed cities
       .flatMap((p) =>
         (p.districts || []).map((d) => ({
           ...d,
           playerId: p.playerId,
         }))
       )
+
+    // If there are no valid targets, disable ability
+    if (validTargets.length === 0) return []
+
+    return validTargets
   }
 
   const availableCharacters = players

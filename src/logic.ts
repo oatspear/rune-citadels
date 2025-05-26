@@ -424,6 +424,11 @@ Rune.initLogic({
           ).length
           playerState.coins += militaryDistrictCount
 
+          // Must have military districts or use destruction ability
+          if (militaryDistrictCount === 0 && !payload?.targetDistrictId) {
+            throw Rune.invalidAction()
+          }
+
           // Then optionally destroy a district
           if (payload?.targetDistrictId) {
             for (const [, pState] of Object.entries(game.playerStates)) {
