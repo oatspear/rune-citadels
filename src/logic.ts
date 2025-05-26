@@ -138,8 +138,33 @@ function advanceToNextCharacter(game: GameState): void {
     state.hasUsedAbility = false
   })
 
+  // If current character is King and wasn't assassinated, crown moves immediately
+  if (
+    game.currentCharacterId === 4 &&
+    game.currentCharacterId !== game.assassinatedCharacterId
+  ) {
+    const kingPlayer = Object.entries(game.playerStates).find(
+      ([, state]) => state.character?.id === 4
+    )
+    if (kingPlayer) {
+      game.crownHolder = kingPlayer[0]
+    }
+  }
+
   game.currentCharacterId++
+
+  // End of round processing
   if (game.currentCharacterId > 8) {
+    // If King was assassinated, find out who had it and move the crown at end of round
+    if (game.assassinatedCharacterId === 4) {
+      const assassinatedKingPlayer = Object.entries(game.playerStates).find(
+        ([, state]) => state.character?.id === 4
+      )
+      if (assassinatedKingPlayer) {
+        game.crownHolder = assassinatedKingPlayer[0]
+      }
+    }
+
     // Check for win condition at the end of the round
     const scores = Object.entries(game.playerStates).map(
       ([playerId, state]) => {
