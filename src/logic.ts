@@ -446,7 +446,10 @@ Rune.initLogic({
                   throw Rune.invalidAction() // Can't afford to destroy
                 }
                 playerState.coins -= destructionCost
+
+                // Remove district from city and put it at bottom of deck
                 pState.city.splice(districtIndex, 1)
+                game.deck.push(district)
                 break
               }
             }
