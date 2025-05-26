@@ -138,6 +138,26 @@ function advanceToNextCharacter(game: GameState): void {
     state.hasUsedAbility = false
   })
 
+  // Handle Thief ability if this is the stolen character's turn
+  if (game.currentCharacterId === game.stolenCharacterId) {
+    // Find the player who was the thief
+    const thiefPlayer = Object.entries(game.playerStates).find(
+      ([, state]) => state.character?.id === 2 // 2 is Thief's ID
+    )
+    // Find the player who was stolen from
+    const stolenPlayer = Object.entries(game.playerStates).find(
+      ([, state]) => state.character?.id === game.stolenCharacterId
+    )
+
+    if (thiefPlayer && stolenPlayer) {
+      // Transfer all gold from stolen player to thief
+      const [thiefId] = thiefPlayer
+      const [stolenId] = stolenPlayer
+      game.playerStates[thiefId].coins += game.playerStates[stolenId].coins
+      game.playerStates[stolenId].coins = 0
+    }
+  }
+
   // If current character is King and wasn't assassinated, crown moves immediately
   if (
     game.currentCharacterId === 4 &&
