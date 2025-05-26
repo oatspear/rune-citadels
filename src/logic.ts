@@ -418,28 +418,33 @@ Rune.initLogic({
         }
 
         case "Warlord": {
+          // Always get coins for military districts
+          const militaryDistrictCount = playerState.city.filter(
+            (d) => d.type === "military"
+          ).length
+          playerState.coins += militaryDistrictCount
+
+          // Then optionally destroy a district
           if (payload?.targetDistrictId) {
-            for (const [pid, pState] of Object.entries(game.playerStates)) {
+            for (const [, pState] of Object.entries(game.playerStates)) {
               const districtIndex = pState.city.findIndex(
                 (d) => d.id === payload.targetDistrictId
               )
               if (districtIndex >= 0) {
-                const [district] = pState.city.splice(districtIndex, 1)
-                game.playerStates[pid].coins += Math.floor(district.cost / 2)
-                playerState.hasUsedAbility = true
+                // Warlord must pay cost - 1 to destroy
+                const district = pState.city[districtIndex]
+                const destructionCost = Math.max(0, district.cost - 1)
+                if (playerState.coins < destructionCost) {
+                  throw Rune.invalidAction() // Can't afford to destroy
+                }
+                playerState.coins -= destructionCost
+                pState.city.splice(districtIndex, 1)
                 break
               }
             }
-          } else {
-            const militaryDistrictCount = playerState.city.filter(
-              (d) => d.type === "military"
-            ).length
-            playerState.coins += militaryDistrictCount
-            // Only mark as used if not going into targeting mode
-            if (militaryDistrictCount === 0) {
-              playerState.hasUsedAbility = true
-            }
           }
+
+          playerState.hasUsedAbility = true
           break
         }
       }
