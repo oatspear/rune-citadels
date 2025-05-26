@@ -431,6 +431,14 @@ Rune.initLogic({
                 (d) => d.id === payload.targetDistrictId
               )
               if (districtIndex >= 0) {
+                // Can't target Bishop's districts unless they were assassinated
+                if (
+                  pState.character?.id === 5 &&
+                  game.assassinatedCharacterId !== 5
+                ) {
+                  throw Rune.invalidAction() // Can't target Bishop's districts
+                }
+
                 // Warlord must pay cost - 1 to destroy
                 const district = pState.city[districtIndex]
                 const destructionCost = Math.max(0, district.cost - 1)
