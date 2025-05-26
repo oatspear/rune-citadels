@@ -355,7 +355,6 @@ Rune.initLogic({
         }
 
         case "King": {
-          game.crownHolder = playerId
           const nobleDistrictCount = playerState.city.filter(
             (d) => d.type === "noble"
           ).length
