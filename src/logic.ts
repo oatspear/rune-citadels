@@ -138,8 +138,11 @@ function advanceToNextCharacter(game: GameState): void {
     state.hasUsedAbility = false
   })
 
-  // Handle Thief ability if this is the stolen character's turn
-  if (game.currentCharacterId === game.stolenCharacterId) {
+  // Handle Thief ability if this is the stolen character's turn and they weren't assassinated
+  if (
+    game.currentCharacterId === game.stolenCharacterId &&
+    game.currentCharacterId !== game.assassinatedCharacterId
+  ) {
     // Find the player who was the thief
     const thiefPlayer = Object.entries(game.playerStates).find(
       ([, state]) => state.character?.id === 2 // 2 is Thief's ID
@@ -353,6 +356,10 @@ Rune.initLogic({
 
         case "Thief": {
           if (payload?.targetCharacterId) {
+            // Can't target assassinated characters
+            if (payload.targetCharacterId === game.assassinatedCharacterId) {
+              throw Rune.invalidAction()
+            }
             game.stolenCharacterId = payload.targetCharacterId
             playerState.hasUsedAbility = true
           }
