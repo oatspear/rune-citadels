@@ -919,3 +919,18 @@ button:not([data-disabled]) {
   font-size: 0.9rem;
   margin-top: 0.5rem;
 }
+
+.character-target-overlay .character-option.deck-option {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.character-target-overlay .character-option.deck-option .deck-icon {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.character-target-overlay .character-option.deck-option:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}

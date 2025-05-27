@@ -29,7 +29,7 @@ export function CharacterTargetOverlay({
       case "thief":
         return "Select a character to steal from"
       case "magician":
-        return "Select a character to exchange hands with"
+        return "Exchange cards with a player or the deck"
       case "warlord":
         return "Select a district to destroy"
       default:
@@ -90,27 +90,39 @@ export function CharacterTargetOverlay({
   const availableDistricts = getValidDistricts()
 
   const renderContent = () => {
-    // For magician, show player names
+    // For magician, show player names and deck option
     if (targetSelection.type === "magician") {
-      return players.map((player) => {
-        const playerInfo = Rune.getPlayerInfo(player.playerId)
-        return (
+      return (
+        <>
+          {players.map((player) => {
+            const playerInfo = Rune.getPlayerInfo(player.playerId)
+            return (
+              <div
+                key={player.playerId}
+                className="character-option"
+                onClick={() => onSelect(Number(player.playerId))}
+              >
+                <img
+                  src={playerInfo?.avatarUrl}
+                  className="player-avatar"
+                  alt={playerInfo?.displayName || "Unknown player"}
+                />
+                <span className="player-name">
+                  {playerInfo?.displayName || "Unknown player"}
+                </span>
+              </div>
+            )
+          })}
           <div
-            key={player.playerId}
-            className="character-option"
-            onClick={() => onSelect(Number(player.playerId))}
+            key="deck"
+            className="character-option deck-option"
+            onClick={() => onSelect(0)} // Use 0 as special ID for deck
           >
-            <img
-              src={playerInfo?.avatarUrl}
-              className="player-avatar"
-              alt={playerInfo?.displayName || "Unknown player"}
-            />
-            <span className="player-name">
-              {playerInfo?.displayName || "Unknown player"}
-            </span>
+            <span className="deck-icon">🎴</span>
+            <span className="player-name">Deck</span>
           </div>
-        )
-      })
+        </>
+      )
     }
 
     if (targetSelection.type === "warlord") {
