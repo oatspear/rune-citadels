@@ -374,44 +374,37 @@ Rune.initLogic({
             throw Rune.invalidAction()
           }
 
-          if (payload?.targetCharacterId && payload.targetCharacterId > 0) {
-            // Option 1: Exchange with another player
-            const targetId = String(payload.targetCharacterId)
-            const targetState = game.playerStates[targetId]
+          if (payload?.targetCharacterId !== undefined) {
+            const handSize = playerState.hand.length
 
-            if (!targetState) {
-              throw Rune.invalidAction() // Target player not found
+            // Option 1: Exchange with deck (targetCharacterId === 0)
+            if (payload.targetCharacterId === 0) {
+              if (handSize === 0) {
+                throw Rune.invalidAction() // Cannot exchange empty hand with deck
+              }
+
+              // Put current hand at bottom of deck
+              game.deck.push(...playerState.hand.map((card) => ({ ...card })))
+
+              // Draw equal number of new cards
+              const drawnCards = game.deck.splice(0, handSize)
+              playerState.hand = drawnCards
+              playerState.hasUsedAbility = true
             }
+            // Option 2: Exchange with another player (targetCharacterId > 0)
+            else if (payload.targetCharacterId > 0) {
+              const targetId = String(payload.targetCharacterId)
+              const targetState = game.playerStates[targetId]
 
-            // Exchange hands
-            const myOldHand = playerState.hand.map((card) => ({ ...card }))
-            const targetOldHand = targetState.hand.map((card) => ({ ...card }))
-            playerState.hand = targetOldHand
-            targetState.hand = myOldHand
-            playerState.hasUsedAbility = true
-          }
-          // Option 2: Return cards to deck and draw new ones
-          else if (payload?.selectedCardIds?.length) {
-            const selectedCards = playerState.hand.filter((card) =>
-              payload.selectedCardIds!.includes(card.id)
-            )
+              if (!targetState) {
+                throw Rune.invalidAction() // Target player not found
+              }
 
-            if (selectedCards.length === payload.selectedCardIds.length) {
-              // Put selected cards at bottom of deck
-              game.deck.push(...selectedCards.map((card) => ({ ...card })))
-
-              // Remove selected cards from hand
-              playerState.hand = playerState.hand.filter(
-                (card) => !payload.selectedCardIds!.includes(card.id)
-              )
-
-              // Draw equal number of cards from top of deck
-              const drawCount = selectedCards.length
-              const drawnCards = game.deck.splice(0, drawCount)
-
-              // Add drawn cards to hand
-              playerState.hand.push(...drawnCards)
-
+              // Exchange hands
+              const myOldHand = playerState.hand.map((card) => ({ ...card }))
+              const targetOldHand = targetState.hand.map((card) => ({ ...card }))
+              playerState.hand = targetOldHand
+              targetState.hand = myOldHand
               playerState.hasUsedAbility = true
             }
           }
