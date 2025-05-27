@@ -165,6 +165,7 @@ interface PlayerHandProps {
   isCharacterSelector?: boolean
   game: GameState
   hasChosenResource: boolean
+  hasUsedAbility?: boolean
 }
 
 function PlayerHand({
@@ -182,6 +183,7 @@ function PlayerHand({
   isCharacterSelector,
   game,
   hasChosenResource,
+  hasUsedAbility,
 }: PlayerHandProps) {
   const [isCharacterSelectOpen, setIsCharacterSelectOpen] = useState(false)
   const [isHandCardsOpen, setIsHandCardsOpen] = useState(false)
@@ -193,6 +195,9 @@ function PlayerHand({
   // Helper to determine if card selection is allowed
   const canSelectCards =
     phase === "PLAY_TURNS" && character && !disabled && hasChosenResource
+
+  // Helper to determine if ability can be used
+  const canUseAbility = phase === "PLAY_TURNS" && !disabled && !hasUsedAbility
 
   return (
     <>
@@ -284,19 +289,21 @@ function PlayerHand({
 
           {character && (
             <button
-              className="action-button special-ability"
+              className={`action-button special-ability ${hasUsedAbility ? "used" : ""}`}
               onClick={() => onSpecialAbility?.()}
-              disabled={!onSpecialAbility || disabled || phase !== "PLAY_TURNS"}
+              disabled={!onSpecialAbility || disabled || phase !== "PLAY_TURNS" || hasUsedAbility}
               title={
                 phase !== "PLAY_TURNS"
                   ? "Wait for character selection to complete"
                   : disabled
                     ? "Not your turn"
-                    : getCharacterAbilityDescription(character)
+                    : hasUsedAbility
+                      ? "Ability already used this turn"
+                      : getCharacterAbilityDescription(character)
               }
             >
               <span className="ability-icon">{character.icon}</span>
-              Use Ability
+              {hasUsedAbility ? "Ability Used" : "Use Ability"}
             </button>
           )}
         </div>
@@ -724,6 +731,7 @@ function App() {
             canPlay && hasChosenResource ? handleCardSelect : undefined
           }
           onSpecialAbility={canPlay ? handleSpecialAbility : undefined}
+          hasUsedAbility={currentPlayerState?.hasUsedAbility}
           onChooseCoins={() => {
             Rune.actions.takeCoins(null)
             setHasChosenResource(true)
