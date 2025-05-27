@@ -369,20 +369,26 @@ Rune.initLogic({
         }
 
         case "Magician": {
+          // Check if ability was already used
+          if (playerState.hasUsedAbility) {
+            throw Rune.invalidAction()
+          }
+
           if (payload?.targetCharacterId && payload.targetCharacterId > 0) {
             // Option 1: Exchange with another player
-            // Find other player with matching character ID
-            const targetState = Object.entries(game.playerStates).find(
-              ([, state]) => state.character?.id === payload.targetCharacterId
-            )?.[1]
+            const targetId = String(payload.targetCharacterId)
+            const targetState = game.playerStates[targetId]
 
-            if (targetState) {
-              // Exchange hands with target player
-              const tempHand = playerState.hand
-              playerState.hand = targetState.hand
-              targetState.hand = tempHand
-              playerState.hasUsedAbility = true
+            if (!targetState) {
+              throw Rune.invalidAction() // Target player not found
             }
+
+            // Exchange hands
+            const myOldHand = playerState.hand.map((card) => ({ ...card }))
+            const targetOldHand = targetState.hand.map((card) => ({ ...card }))
+            playerState.hand = targetOldHand
+            targetState.hand = myOldHand
+            playerState.hasUsedAbility = true
           }
           // Option 2: Return cards to deck and draw new ones
           else if (payload?.selectedCardIds?.length) {
@@ -392,7 +398,7 @@ Rune.initLogic({
 
             if (selectedCards.length === payload.selectedCardIds.length) {
               // Put selected cards at bottom of deck
-              game.deck.push(...selectedCards)
+              game.deck.push(...selectedCards.map((card) => ({ ...card })))
 
               // Remove selected cards from hand
               playerState.hand = playerState.hand.filter(

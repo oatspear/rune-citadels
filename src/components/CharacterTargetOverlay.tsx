@@ -129,6 +129,7 @@ export function CharacterTargetOverlay({
                     className="character-option"
                     onClick={() => {
                       setSelectedCards([]) // Clear selections
+                      // Pass the player ID for the exchange
                       onSelect(Number(player.playerId))
                     }}
                   >
