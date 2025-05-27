@@ -1,5 +1,6 @@
 import type { Character, District, TargetSelectionState } from "../logic"
 import type { PlayerId } from "rune-sdk"
+import { useState } from "react"
 
 interface CharacterTargetOverlayProps {
   targetSelection: TargetSelectionState
@@ -26,7 +27,10 @@ export function CharacterTargetOverlay({
   onCancel,
   currentCharacter,
   assassinatedCharacterId,
+  currentHand = [], // Add default empty array
 }: CharacterTargetOverlayProps) {
+  const [selectedCards, setSelectedCards] = useState<District[]>([])
+
   const getTitle = () => {
     switch (targetSelection.type) {
       case "assassin":
@@ -34,7 +38,9 @@ export function CharacterTargetOverlay({
       case "thief":
         return "Select a character to steal from"
       case "magician":
-        return "Exchange your hand with another player or with the deck"
+        return selectedCards.length > 0
+          ? `Return ${selectedCards.length} card(s) to draw same number from deck`
+          : "Exchange your hand with another player or select cards to exchange with deck"
       case "warlord":
         return "Select a district to destroy"
       default:
@@ -53,7 +59,7 @@ export function CharacterTargetOverlay({
         // Cannot steal from yourself or the Assassin
         return character.id !== currentCharacter.id && character.id !== 1
       case "magician":
-        // Allow exchanging with any character except yourself
+        // Cannot exchange with yourself
         return character.id !== currentCharacter.id
       case "warlord":
         // Districts are handled separately
@@ -94,47 +100,94 @@ export function CharacterTargetOverlay({
 
   const availableDistricts = getValidDistricts()
 
+  const handleCardSelect = (card: District) => {
+    setSelectedCards((current) => {
+      const index = current.findIndex((c) => c.id === card.id)
+      if (index >= 0) {
+        // Remove card if already selected
+        return current.filter((c) => c.id !== card.id)
+      } else {
+        // Add card if not already selected
+        return [...current, card]
+      }
+    })
+  }
+
   const renderContent = () => {
     if (targetSelection.type === "magician") {
-      // Get all players with characters except yourself
-      const playersWithCharacters = players.filter(
-        (p) =>
-          p.playerId && p.character && p.character.id !== currentCharacter?.id
-      )
-
       return (
-        <div className="character-options">
-          <div
-            className="character-option deck-option"
-            onClick={() => onSelect(-1)}
-            title="Exchange your entire hand with new cards from the deck"
-          >
-            <span className="character-icon">🎴</span>
-            <span className="character-name">Exchange with Deck</span>
+        <>
+          {/* Player options */}
+          <div className="target-section">
+            <h4>Exchange with Player:</h4>
+            <div className="character-options">
+              {players.map((player) => {
+                const playerInfo = Rune.getPlayerInfo(player.playerId)
+                return (
+                  <div
+                    key={player.playerId}
+                    className="character-option"
+                    onClick={() => {
+                      setSelectedCards([]) // Clear selections
+                      // Pass the player ID for the exchange
+                      onSelect(Number(player.playerId))
+                    }}
+                  >
+                    <img
+                      src={playerInfo?.avatarUrl}
+                      className="player-avatar"
+                      alt={playerInfo?.displayName || "Unknown player"}
+                    />
+                    <span className="player-name">
+                      {playerInfo?.displayName || "Unknown player"}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
           </div>
 
-          {/* Divider between deck and players */}
-          <div className="option-divider">or exchange with player:</div>
-
-          {playersWithCharacters.map((player) => {
-            const playerInfo = player.playerId
-              ? Rune.getPlayerInfo(player.playerId)
-              : null
-            return (
-              <div
-                key={player.playerId}
-                className="character-option"
-                onClick={() => onSelect(player.character!.id)}
-                title={`Exchange hands with ${playerInfo?.displayName || "Unknown Player"}`}
+          {/* Deck interaction */}
+          <div className="target-section">
+            <h4>Or Exchange with Deck:</h4>
+            <div className="hand-cards">
+              {currentHand.map((card) => (
+                <div
+                  key={card.id}
+                  className={`district ${card.type} ${
+                    selectedCards.some((c) => c.id === card.id)
+                      ? "selected"
+                      : ""
+                  }`}
+                  onClick={() => handleCardSelect(card)}
+                  title={`${card.name} (${card.cost}) - Click to ${
+                    selectedCards.some((c) => c.id === card.id)
+                      ? "unselect"
+                      : "select"
+                  }`}
+                >
+                  <div className="district-cost">{card.cost}</div>
+                  <div className="district-name">{card.name}</div>
+                  <div className="district-type">{card.type}</div>
+                </div>
+              ))}
+            </div>
+            {selectedCards.length > 0 && (
+              <button
+                className="confirm-button"
+                onClick={() =>
+                  onSelect(
+                    -1, // Use -1 to indicate no player target
+                    undefined,
+                    selectedCards.map((c) => c.id)
+                  )
+                }
               >
-                <span className="character-icon">👤</span>
-                <span className="character-name">
-                  {playerInfo?.displayName || "Unknown Player"}
-                </span>
-              </div>
-            )
-          })}
-        </div>
+                Confirm Exchange ({selectedCards.length} cards)
+              </button>
+            )}
+          </div>
+        </>
       )
     }
 
