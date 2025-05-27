@@ -91,17 +91,23 @@ export function CharacterTargetOverlay({
 
   const renderContent = () => {
     if (targetSelection.type === "warlord") {
-      return availableDistricts.map((district) => (
-        <div
-          key={`${district.playerId}-${district.id}`}
-          className={`district ${district.type}`}
-          onClick={() => onSelect(0, district.id)}
-        >
-          <div className="district-cost">{district.cost}</div>
-          <div className="district-name">{district.name}</div>
-          <div className="district-type">{district.type}</div>
-        </div>
-      ))
+      return availableDistricts.map((district) => {
+        const playerInfo = Rune.getPlayerInfo(district.playerId)
+        const ownerName = playerInfo?.displayName || "Unknown Player"
+        return (
+          <div
+            key={`${district.playerId}-${district.id}`}
+            className={`district ${district.type} with-owner`}
+            onClick={() => onSelect(0, district.id)}
+            title={`${district.name} (${district.cost}) - Owned by ${ownerName}`}
+          >
+            <div className="district-cost">{district.cost}</div>
+            <div className="district-name">{district.name}</div>
+            <div className="district-type">{district.type}</div>
+            <div className="district-owner">{ownerName}</div>
+          </div>
+        )
+      })
     }
 
     return availableCharacters.map((character) => (

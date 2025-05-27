@@ -727,6 +727,34 @@ button:not([data-disabled]) {
   padding: 0.5rem;
 }
 
+.character-target-grid .district {
+  position: relative;
+  width: 100px;
+  height: 133px; /* Maintain 3:4 aspect ratio with extra space for owner */
+  cursor: pointer;
+  transition: transform 0.2s ease-out;
+}
+
+.character-target-grid .district:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.character-target-grid .district .district-owner {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  font-size: 0.65rem;
+  text-align: center;
+  border-radius: 0 0 0.5rem 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .character-option.removed,
 .character-option.unavailable,
 .character-option.taken {
