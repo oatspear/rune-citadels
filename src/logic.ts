@@ -244,6 +244,14 @@ function advanceToNextCharacter(game: GameState): void {
     game.turnPhase = "CHARACTER_SELECTION"
     game.assassinatedCharacterId = undefined
     game.stolenCharacterId = undefined
+
+    // Regenerate available characters for the new round
+    const { availableCharacters, removedCharacter, unavailableCharacter } = 
+      getAvailableCharacters()
+    game.availableCharacters = availableCharacters
+    game.removedCharacterId = removedCharacter.id
+    game.unavailableCharacterId = unavailableCharacter.id
+
     Object.values(game.playerStates).forEach((state) => {
       state.character = undefined
     })
