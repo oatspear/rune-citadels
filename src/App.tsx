@@ -687,9 +687,16 @@ function App() {
                   Rune.actions.useCharacterAbility({
                     targetDistrictId: districtId,
                   })
-                } else {
+                } else if (typeof targetId === "number") {
+                  // Handle character ID targets (Assassin, Thief)
                   Rune.actions.useCharacterAbility({
                     targetCharacterId: targetId,
+                    selectedCardIds: selectedCardIds,
+                  })
+                } else {
+                  // Handle Magician's player ID or deck targets
+                  Rune.actions.useCharacterAbility({
+                    targetCharacterId: targetId, // PlayerId or "0" for deck
                     selectedCardIds: selectedCardIds,
                   })
                 }
@@ -697,7 +704,6 @@ function App() {
               }}
               onCancel={handleCharacterTargetCancel}
               currentCharacter={getCurrentCharacter()}
-              currentHand={game.playerStates[yourPlayerId!]?.hand || []} // Pass current hand for Magician ability
             />
           )
         ) : null}

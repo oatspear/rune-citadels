@@ -9,7 +9,7 @@ interface CharacterTargetOverlayProps {
     districts?: District[]
   }>
   onSelect: (
-    characterId: number,
+    targetId: PlayerId | "0" | number, // Allow PlayerId/"0" for Magician, number for character ID
     districtId?: string,
     selectedCardIds?: string[]
   ) => void
@@ -104,7 +104,7 @@ export function CharacterTargetOverlay({
               <div
                 key={player.playerId}
                 className="character-option"
-                onClick={() => onSelect(Number(player.playerId))}
+                onClick={() => onSelect(player.playerId)}
               >
                 <img
                   src={playerInfo?.avatarUrl}
@@ -117,12 +117,12 @@ export function CharacterTargetOverlay({
               </div>
             )
           })}
-          
+
           {/* Deck option */}
           <div className="option-divider">or</div>
-          <div 
+          <div
             className="character-option deck-option"
-            onClick={() => onSelect(0)} // Use 0 to indicate deck exchange
+            onClick={() => onSelect("0")}
           >
             <span className="deck-icon">📜</span>
             <span className="player-name">Exchange with Deck</span>

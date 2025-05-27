@@ -51,7 +51,7 @@ interface ActionPayloads {
   takeCoins: null
   selectCharacter: { characterId: number }
   useCharacterAbility: {
-    targetCharacterId?: number
+    targetCharacterId?: PlayerId | "0" | number // PlayerId/"0" for Magician, number for others
     targetDistrictId?: string
     selectedCardIds?: string[] // For Magician's deck interaction
   } | null
@@ -349,20 +349,22 @@ Rune.initLogic({
 
       switch (playerState.character.name) {
         case "Assassin": {
-          if (payload?.targetCharacterId) {
-            game.assassinatedCharacterId = payload.targetCharacterId
+          const targetId = payload?.targetCharacterId
+          if (typeof targetId === "number") {
+            game.assassinatedCharacterId = targetId
             playerState.hasUsedAbility = true
           }
           break
         }
 
         case "Thief": {
-          if (payload?.targetCharacterId) {
+          const targetId = payload?.targetCharacterId
+          if (typeof targetId === "number") {
             // Can't target assassinated characters
-            if (payload.targetCharacterId === game.assassinatedCharacterId) {
+            if (targetId === game.assassinatedCharacterId) {
               throw Rune.invalidAction()
             }
-            game.stolenCharacterId = payload.targetCharacterId
+            game.stolenCharacterId = targetId
             playerState.hasUsedAbility = true
           }
           break
@@ -377,8 +379,8 @@ Rune.initLogic({
           if (payload?.targetCharacterId !== undefined) {
             const handSize = playerState.hand.length
 
-            // Option 1: Exchange with deck (targetCharacterId === 0)
-            if (payload.targetCharacterId === 0) {
+            // Option 1: Exchange with deck (targetCharacterId === "0")
+            if (payload.targetCharacterId === "0") {
               if (handSize === 0) {
                 throw Rune.invalidAction() // Cannot exchange empty hand with deck
               }
@@ -391,18 +393,24 @@ Rune.initLogic({
               playerState.hand = drawnCards
               playerState.hasUsedAbility = true
             }
-            // Option 2: Exchange with another player (targetCharacterId > 0)
-            else if (payload.targetCharacterId > 0) {
-              const targetId = String(payload.targetCharacterId)
+            // Option 2: Exchange with another player
+            else {
+              const targetId = payload.targetCharacterId
               const targetState = game.playerStates[targetId]
 
               if (!targetState) {
                 throw Rune.invalidAction() // Target player not found
               }
 
+              if (targetId === playerId) {
+                throw Rune.invalidAction() // Cannot exchange with self
+              }
+
               // Exchange hands
               const myOldHand = playerState.hand.map((card) => ({ ...card }))
-              const targetOldHand = targetState.hand.map((card) => ({ ...card }))
+              const targetOldHand = targetState.hand.map((card) => ({
+                ...card,
+              }))
               playerState.hand = targetOldHand
               targetState.hand = myOldHand
               playerState.hasUsedAbility = true
