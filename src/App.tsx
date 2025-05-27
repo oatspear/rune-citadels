@@ -499,12 +499,12 @@ function App() {
     }
 
     if (localUIState?.type === "magician") {
-      // For Magician, only show other players (not their characters)
+      // For Magician, show other players with their characters
       return game.playerIds
         .filter((id) => id !== yourPlayerId) // Can't target yourself
         .map((playerId) => ({
           playerId,
-          // Don't include character to prevent revealing it
+          character: game.playerStates[playerId].character,
         }))
     }
 
