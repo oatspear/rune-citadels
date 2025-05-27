@@ -139,7 +139,7 @@ function HandCardsList({
                       : `Not enough coins to build ${card.name} (need ${card.cost})`
               }
             >
-              <div className="district-cost">{card.cost}</div>
+              <div className="district-cost">{card.cost}🪙</div>
               <div className="district-name">{card.name}</div>
               <div className="district-type">{card.type}</div>
             </div>
