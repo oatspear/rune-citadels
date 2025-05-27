@@ -122,7 +122,7 @@ export function CharacterTargetOverlay({
           <div className="option-divider">or</div>
           <div 
             className="character-option deck-option"
-            onClick={() => onSelect(-1)} // Use -1 to indicate deck exchange
+            onClick={() => onSelect(0)} // Use 0 to indicate deck exchange
           >
             <span className="deck-icon">📜</span>
             <span className="player-name">Exchange with Deck</span>
