@@ -246,7 +246,7 @@ function advanceToNextCharacter(game: GameState): void {
     game.stolenCharacterId = undefined
 
     // Regenerate available characters for the new round
-    const { availableCharacters, removedCharacter, unavailableCharacter } = 
+    const { availableCharacters, removedCharacter, unavailableCharacter } =
       getAvailableCharacters()
     game.availableCharacters = availableCharacters
     game.removedCharacterId = removedCharacter.id
