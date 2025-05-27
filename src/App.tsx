@@ -313,7 +313,7 @@ function getCharacterAbilityDescription(character: Character): string {
     case "Thief":
       return "Steal coins from another character"
     case "Magician":
-      return "Exchange your entire hand with another player's hand or the deck"
+      return "Exchange your entire hand with another player, or return any cards to bottom of deck to draw an equal number"
     case "King":
       return "Take crown and 1 gold for each noble district"
     case "Bishop":
@@ -682,7 +682,7 @@ function App() {
                   : // For other abilities (Warlord, Magician), use actual player states
                     getPlayerCharacters()
               }
-              onSelect={(targetId, districtId) => {
+              onSelect={(targetId, districtId, selectedCardIds) => {
                 if (districtId) {
                   Rune.actions.useCharacterAbility({
                     targetDistrictId: districtId,
@@ -690,12 +690,14 @@ function App() {
                 } else {
                   Rune.actions.useCharacterAbility({
                     targetCharacterId: targetId,
+                    selectedCardIds: selectedCardIds,
                   })
                 }
                 setLocalUIState(null)
               }}
               onCancel={handleCharacterTargetCancel}
               currentCharacter={getCurrentCharacter()}
+              currentHand={game.playerStates[yourPlayerId!]?.hand || []} // Pass current hand for Magician ability
             />
           )
         ) : null}

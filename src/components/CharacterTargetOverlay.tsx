@@ -1,5 +1,6 @@
 import type { Character, District, TargetSelectionState } from "../logic"
 import type { PlayerId } from "rune-sdk"
+import { useState } from "react"
 
 interface CharacterTargetOverlayProps {
   targetSelection: TargetSelectionState
@@ -8,10 +9,15 @@ interface CharacterTargetOverlayProps {
     character?: Character
     districts?: District[]
   }>
-  onSelect: (characterId: number, districtId?: string) => void
+  onSelect: (
+    characterId: number,
+    districtId?: string,
+    selectedCardIds?: string[]
+  ) => void
   onCancel: () => void
   currentCharacter: Character | null
   assassinatedCharacterId?: number
+  currentHand?: District[] // Add current hand for card selection
 }
 
 export function CharacterTargetOverlay({
@@ -21,7 +27,10 @@ export function CharacterTargetOverlay({
   onCancel,
   currentCharacter,
   assassinatedCharacterId,
+  currentHand = [], // Add default empty array
 }: CharacterTargetOverlayProps) {
+  const [selectedCards, setSelectedCards] = useState<District[]>([])
+
   const getTitle = () => {
     switch (targetSelection.type) {
       case "assassin":
@@ -29,7 +38,9 @@ export function CharacterTargetOverlay({
       case "thief":
         return "Select a character to steal from"
       case "magician":
-        return "Exchange your hand with another player's hand or the deck"
+        return selectedCards.length > 0
+          ? `Return ${selectedCards.length} card(s) to draw same number from deck`
+          : "Exchange your hand with another player or select cards to exchange with deck"
       case "warlord":
         return "Select a district to destroy"
       default:
@@ -89,37 +100,91 @@ export function CharacterTargetOverlay({
 
   const availableDistricts = getValidDistricts()
 
+  const handleCardSelect = (card: District) => {
+    setSelectedCards((current) => {
+      const index = current.findIndex((c) => c.id === card.id)
+      if (index >= 0) {
+        // Remove card if already selected
+        return current.filter((c) => c.id !== card.id)
+      } else {
+        // Add card if not already selected
+        return [...current, card]
+      }
+    })
+  }
+
   const renderContent = () => {
-    // For magician, show player names and deck option
     if (targetSelection.type === "magician") {
       return (
         <>
-          {players.map((player) => {
-            const playerInfo = Rune.getPlayerInfo(player.playerId)
-            return (
-              <div
-                key={player.playerId}
-                className="character-option"
-                onClick={() => onSelect(Number(player.playerId))}
+          {/* Player options */}
+          <div className="target-section">
+            <h4>Exchange with Player:</h4>
+            <div className="character-options">
+              {players.map((player) => {
+                const playerInfo = Rune.getPlayerInfo(player.playerId)
+                return (
+                  <div
+                    key={player.playerId}
+                    className="character-option"
+                    onClick={() => {
+                      setSelectedCards([]) // Clear selections
+                      onSelect(Number(player.playerId))
+                    }}
+                  >
+                    <img
+                      src={playerInfo?.avatarUrl}
+                      className="player-avatar"
+                      alt={playerInfo?.displayName || "Unknown player"}
+                    />
+                    <span className="player-name">
+                      {playerInfo?.displayName || "Unknown player"}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Deck interaction */}
+          <div className="target-section">
+            <h4>Or Exchange with Deck:</h4>
+            <div className="hand-cards">
+              {currentHand.map((card) => (
+                <div
+                  key={card.id}
+                  className={`district ${card.type} ${
+                    selectedCards.some((c) => c.id === card.id)
+                      ? "selected"
+                      : ""
+                  }`}
+                  onClick={() => handleCardSelect(card)}
+                  title={`${card.name} (${card.cost}) - Click to ${
+                    selectedCards.some((c) => c.id === card.id)
+                      ? "unselect"
+                      : "select"
+                  }`}
+                >
+                  <div className="district-cost">{card.cost}</div>
+                  <div className="district-name">{card.name}</div>
+                  <div className="district-type">{card.type}</div>
+                </div>
+              ))}
+            </div>
+            {selectedCards.length > 0 && (
+              <button
+                className="confirm-button"
+                onClick={() =>
+                  onSelect(
+                    0,
+                    undefined,
+                    selectedCards.map((c) => c.id)
+                  )
+                }
               >
-                <img
-                  src={playerInfo?.avatarUrl}
-                  className="player-avatar"
-                  alt={playerInfo?.displayName || "Unknown player"}
-                />
-                <span className="player-name">
-                  {playerInfo?.displayName || "Unknown player"}
-                </span>
-              </div>
-            )
-          })}
-          <div
-            key="deck"
-            className="character-option deck-option"
-            onClick={() => onSelect(0)} // Use 0 as special ID for deck
-          >
-            <span className="deck-icon">🎴</span>
-            <span className="player-name">Deck</span>
+                Confirm Exchange ({selectedCards.length} cards)
+              </button>
+            )}
           </div>
         </>
       )

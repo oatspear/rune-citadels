@@ -31,6 +31,7 @@ export interface GameState {
       districtsPlayedThisTurn: number
       hasUsedAbility: boolean
       drawnCards?: District[] // Temporary storage for cards being chosen from
+      selectedCards?: District[] // For storing cards selected to return to deck with Magician ability
     }
   }
   deck: District[]
@@ -52,6 +53,7 @@ interface ActionPayloads {
   useCharacterAbility: {
     targetCharacterId?: number
     targetDistrictId?: string
+    selectedCardIds?: string[] // For Magician's deck interaction
   } | null
   playDistrict: { districtId: string }
   drawCards: { cardIndex?: number }
@@ -367,14 +369,43 @@ Rune.initLogic({
         }
 
         case "Magician": {
+          // Option 1: Exchange with another player
           if (payload?.targetCharacterId) {
-            const targetState = Object.values(game.playerStates).find(
-              (state) => state.character?.id === payload.targetCharacterId
-            )
+            // Find other player with matching character ID
+            const targetState = Object.entries(game.playerStates).find(
+              ([, state]) => state.character?.id === payload.targetCharacterId
+            )?.[1]
+
             if (targetState) {
+              // Exchange hands with target player
               const tempHand = playerState.hand
               playerState.hand = targetState.hand
               targetState.hand = tempHand
+              playerState.hasUsedAbility = true
+            }
+          }
+          // Option 2: Return cards to deck and draw new ones
+          else if (payload?.selectedCardIds?.length) {
+            const selectedCards = playerState.hand.filter((card) =>
+              payload.selectedCardIds!.includes(card.id)
+            )
+
+            if (selectedCards.length === payload.selectedCardIds.length) {
+              // Put selected cards at bottom of deck
+              game.deck.push(...selectedCards)
+
+              // Remove selected cards from hand
+              playerState.hand = playerState.hand.filter(
+                (card) => !payload.selectedCardIds!.includes(card.id)
+              )
+
+              // Draw equal number of cards from top of deck
+              const drawCount = selectedCards.length
+              const drawnCards = game.deck.splice(0, drawCount)
+
+              // Add drawn cards to hand
+              playerState.hand.push(...drawnCards)
+
               playerState.hasUsedAbility = true
             }
           }
