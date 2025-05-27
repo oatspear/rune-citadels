@@ -196,9 +196,6 @@ function PlayerHand({
   const canSelectCards =
     phase === "PLAY_TURNS" && character && !disabled && hasChosenResource
 
-  // Helper to determine if ability can be used
-  const canUseAbility = phase === "PLAY_TURNS" && !disabled && !hasUsedAbility
-
   return (
     <>
       {phase === "PLAY_TURNS" && !disabled && !hasChosenResource && (
@@ -291,7 +288,12 @@ function PlayerHand({
             <button
               className={`action-button special-ability ${hasUsedAbility ? "used" : ""}`}
               onClick={() => onSpecialAbility?.()}
-              disabled={!onSpecialAbility || disabled || phase !== "PLAY_TURNS" || hasUsedAbility}
+              disabled={
+                !onSpecialAbility ||
+                disabled ||
+                phase !== "PLAY_TURNS" ||
+                hasUsedAbility
+              }
               title={
                 phase !== "PLAY_TURNS"
                   ? "Wait for character selection to complete"
