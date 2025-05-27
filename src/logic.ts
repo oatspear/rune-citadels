@@ -77,30 +77,90 @@ export const CHARACTERS: Character[] = [
   { id: 8, name: "Warlord", icon: "⚔️" },
 ]
 
-// District cards
+// District cards - each card appears 4 times
 const DISTRICTS: District[] = [
   // Noble districts
-  { id: "palace", name: "Palace", type: "noble", cost: 5 },
-  { id: "castle", name: "Castle", type: "noble", cost: 4 },
-  { id: "manor", name: "Manor", type: "noble", cost: 3 },
+  // 4 copies of Palace
+  { id: "palace_1", name: "Palace", type: "noble", cost: 5 },
+  { id: "palace_2", name: "Palace", type: "noble", cost: 5 },
+  { id: "palace_3", name: "Palace", type: "noble", cost: 5 },
+  { id: "palace_4", name: "Palace", type: "noble", cost: 5 },
+  // 4 copies of Castle
+  { id: "castle_1", name: "Castle", type: "noble", cost: 4 },
+  { id: "castle_2", name: "Castle", type: "noble", cost: 4 },
+  { id: "castle_3", name: "Castle", type: "noble", cost: 4 },
+  { id: "castle_4", name: "Castle", type: "noble", cost: 4 },
+  // 4 copies of Manor
+  { id: "manor_1", name: "Manor", type: "noble", cost: 3 },
+  { id: "manor_2", name: "Manor", type: "noble", cost: 3 },
+  { id: "manor_3", name: "Manor", type: "noble", cost: 3 },
+  { id: "manor_4", name: "Manor", type: "noble", cost: 3 },
 
   // Religious districts
-  { id: "temple", name: "Temple", type: "religious", cost: 2 },
-  { id: "church", name: "Church", type: "religious", cost: 3 },
-  { id: "monastery", name: "Monastery", type: "religious", cost: 3 },
-  { id: "cathedral", name: "Cathedral", type: "religious", cost: 5 },
+  // 4 copies of Temple
+  { id: "temple_1", name: "Temple", type: "religious", cost: 2 },
+  { id: "temple_2", name: "Temple", type: "religious", cost: 2 },
+  { id: "temple_3", name: "Temple", type: "religious", cost: 2 },
+  { id: "temple_4", name: "Temple", type: "religious", cost: 2 },
+  // 4 copies of Church
+  { id: "church_1", name: "Church", type: "religious", cost: 3 },
+  { id: "church_2", name: "Church", type: "religious", cost: 3 },
+  { id: "church_3", name: "Church", type: "religious", cost: 3 },
+  { id: "church_4", name: "Church", type: "religious", cost: 3 },
+  // 4 copies of Monastery
+  { id: "monastery_1", name: "Monastery", type: "religious", cost: 3 },
+  { id: "monastery_2", name: "Monastery", type: "religious", cost: 3 },
+  { id: "monastery_3", name: "Monastery", type: "religious", cost: 3 },
+  { id: "monastery_4", name: "Monastery", type: "religious", cost: 3 },
+  // 4 copies of Cathedral
+  { id: "cathedral_1", name: "Cathedral", type: "religious", cost: 5 },
+  { id: "cathedral_2", name: "Cathedral", type: "religious", cost: 5 },
+  { id: "cathedral_3", name: "Cathedral", type: "religious", cost: 5 },
+  { id: "cathedral_4", name: "Cathedral", type: "religious", cost: 5 },
 
   // Trade districts
-  { id: "tavern", name: "Tavern", type: "trade", cost: 1 },
-  { id: "market", name: "Market", type: "trade", cost: 2 },
-  { id: "trading_post", name: "Trading Post", type: "trade", cost: 2 },
-  { id: "harbor", name: "Harbor", type: "trade", cost: 4 },
+  // 4 copies of Tavern
+  { id: "tavern_1", name: "Tavern", type: "trade", cost: 1 },
+  { id: "tavern_2", name: "Tavern", type: "trade", cost: 1 },
+  { id: "tavern_3", name: "Tavern", type: "trade", cost: 1 },
+  { id: "tavern_4", name: "Tavern", type: "trade", cost: 1 },
+  // 4 copies of Market
+  { id: "market_1", name: "Market", type: "trade", cost: 2 },
+  { id: "market_2", name: "Market", type: "trade", cost: 2 },
+  { id: "market_3", name: "Market", type: "trade", cost: 2 },
+  { id: "market_4", name: "Market", type: "trade", cost: 2 },
+  // 4 copies of Trading Post
+  { id: "trading_post_1", name: "Trading Post", type: "trade", cost: 2 },
+  { id: "trading_post_2", name: "Trading Post", type: "trade", cost: 2 },
+  { id: "trading_post_3", name: "Trading Post", type: "trade", cost: 2 },
+  { id: "trading_post_4", name: "Trading Post", type: "trade", cost: 2 },
+  // 4 copies of Harbor
+  { id: "harbor_1", name: "Harbor", type: "trade", cost: 4 },
+  { id: "harbor_2", name: "Harbor", type: "trade", cost: 4 },
+  { id: "harbor_3", name: "Harbor", type: "trade", cost: 4 },
+  { id: "harbor_4", name: "Harbor", type: "trade", cost: 4 },
 
   // Military districts
-  { id: "watchtower", name: "Watchtower", type: "military", cost: 1 },
-  { id: "prison", name: "Prison", type: "military", cost: 2 },
-  { id: "barracks", name: "Barracks", type: "military", cost: 3 },
-  { id: "fortress", name: "Fortress", type: "military", cost: 5 },
+  // 4 copies of Watchtower
+  { id: "watchtower_1", name: "Watchtower", type: "military", cost: 1 },
+  { id: "watchtower_2", name: "Watchtower", type: "military", cost: 1 },
+  { id: "watchtower_3", name: "Watchtower", type: "military", cost: 1 },
+  { id: "watchtower_4", name: "Watchtower", type: "military", cost: 1 },
+  // 4 copies of Prison
+  { id: "prison_1", name: "Prison", type: "military", cost: 2 },
+  { id: "prison_2", name: "Prison", type: "military", cost: 2 },
+  { id: "prison_3", name: "Prison", type: "military", cost: 2 },
+  { id: "prison_4", name: "Prison", type: "military", cost: 2 },
+  // 4 copies of Barracks
+  { id: "barracks_1", name: "Barracks", type: "military", cost: 3 },
+  { id: "barracks_2", name: "Barracks", type: "military", cost: 3 },
+  { id: "barracks_3", name: "Barracks", type: "military", cost: 3 },
+  { id: "barracks_4", name: "Barracks", type: "military", cost: 3 },
+  // 4 copies of Fortress
+  { id: "fortress_1", name: "Fortress", type: "military", cost: 5 },
+  { id: "fortress_2", name: "Fortress", type: "military", cost: 5 },
+  { id: "fortress_3", name: "Fortress", type: "military", cost: 5 },
+  { id: "fortress_4", name: "Fortress", type: "military", cost: 5 },
 ]
 
 // Constants
