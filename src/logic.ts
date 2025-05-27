@@ -103,7 +103,7 @@ const DISTRICTS: District[] = [
 
 // Constants
 const TURN_AUTO_ADVANCE_MS = 3000 // 3 seconds in milliseconds
-const DISTRICTS_TO_WIN = 7
+export const DISTRICTS_TO_WIN = 8 // Number of districts needed to win
 
 // Helper functions
 function shuffle<T>(array: T[]): T[] {

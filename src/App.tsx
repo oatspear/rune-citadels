@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import type { PlayerId } from "rune-sdk"
 import type { GameState, Character, District } from "./logic"
-import { CHARACTERS } from "./logic"
+import { CHARACTERS, DISTRICTS_TO_WIN } from "./logic"
 import { CharacterTargetOverlay } from "./components/CharacterTargetOverlay"
 import { CharacterSelect } from "./components/CharacterSelect"
 import { CardSelectOverlay } from "./components/CardSelectOverlay"
@@ -401,15 +401,52 @@ function App() {
         setLocalUIState({ type: "magician", active: true })
         break
       case "Warlord": {
-        const militaryDistricts = game.playerStates[yourPlayerId].city.filter(
+        const warlordState = game.playerStates[yourPlayerId]
+        const warlordMilitaryDistricts = warlordState.city.filter(
           (d) => d.type === "military"
         ).length
-        if (militaryDistricts > 0) {
+        const playerCoins = warlordState.coins
+
+        // Find all districts that can be destroyed
+        const isDistrictTargetable = (
+          district: District,
+          ownerId: PlayerId
+        ) => {
+          const ownerState = game.playerStates[ownerId]
+          const ownerCharacter = ownerState.character
+          // Can't target if owner is Bishop (unless Bishop was assassinated)
+          const isBishopProtected =
+            ownerCharacter?.name === "Bishop" &&
+            ownerCharacter.id !== game.assassinatedCharacterId
+          // Check if we can afford destruction (cost - 1), or if it's free (cost = 1)
+          // Also account for coins we'll get from military districts
+          const destructionCost = Math.max(0, district.cost - 1)
+          const canAffordDestruction =
+            playerCoins + warlordMilitaryDistricts >= destructionCost
+          // Can't target completed cities (8+ districts)
+          const isInCompletedCity = ownerState.city.length >= DISTRICTS_TO_WIN
+
+          return (
+            !isBishopProtected && canAffordDestruction && !isInCompletedCity
+          )
+        }
+
+        // Find all valid targets across all players
+        const validTargets = Object.entries(game.playerStates).flatMap(
+          ([playerId, state]) =>
+            state.city.filter((district) =>
+              isDistrictTargetable(district, playerId)
+            )
+        )
+
+        if (validTargets.length > 0) {
+          // Has valid districts to target, show targeting UI
           setLocalUIState({ type: "warlord", active: true })
-        } else {
-          // Just trigger ability without targeting
+        } else if (warlordMilitaryDistricts > 0) {
+          // No valid targets but has military districts, just get coins
           Rune.actions.useCharacterAbility(null)
         }
+        // If no valid targets and no military districts - do nothing
         break
       }
       default:
