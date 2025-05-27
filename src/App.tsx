@@ -498,12 +498,24 @@ function App() {
       }))
     }
 
-    // For other abilities (Warlord, Magician), use actual player states
-    return game.playerIds.map((playerId) => ({
-      playerId,
-      character: game.playerStates[playerId].character,
-      districts: game.playerStates[playerId].city, // Include districts for Warlord
-    }))
+    if (localUIState?.type === "magician") {
+      // For Magician, only show other players (not their characters)
+      return game.playerIds
+        .filter((id) => id !== yourPlayerId) // Can't target yourself
+        .map((playerId) => ({
+          playerId,
+          // Don't include character to prevent revealing it
+        }))
+    }
+
+    // For Warlord, use actual player states with districts
+    return game.playerIds
+      .filter((id) => id !== yourPlayerId) // Filter out self for clarity
+      .map((playerId) => ({
+        playerId,
+        character: game.playerStates[playerId].character,
+        districts: game.playerStates[playerId].city,
+      }))
   }
 
   const getCurrentCharacter = () => {

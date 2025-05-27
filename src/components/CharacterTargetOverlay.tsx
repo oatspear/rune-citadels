@@ -90,6 +90,29 @@ export function CharacterTargetOverlay({
   const availableDistricts = getValidDistricts()
 
   const renderContent = () => {
+    // For magician, show player names
+    if (targetSelection.type === "magician") {
+      return players.map((player) => {
+        const playerInfo = Rune.getPlayerInfo(player.playerId)
+        return (
+          <div
+            key={player.playerId}
+            className="character-option"
+            onClick={() => onSelect(Number(player.playerId))}
+          >
+            <img
+              src={playerInfo?.avatarUrl}
+              className="player-avatar"
+              alt={playerInfo?.displayName || "Unknown player"}
+            />
+            <span className="player-name">
+              {playerInfo?.displayName || "Unknown player"}
+            </span>
+          </div>
+        )
+      })
+    }
+
     if (targetSelection.type === "warlord") {
       return availableDistricts.map((district) => {
         const playerInfo = Rune.getPlayerInfo(district.playerId)

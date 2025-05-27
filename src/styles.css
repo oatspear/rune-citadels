@@ -906,3 +906,16 @@ button:not([data-disabled]) {
   transform: scale(1.1);
   box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
 }
+
+.character-target-overlay .character-option .player-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.character-target-overlay .character-option .player-name {
+  color: #fff;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
