@@ -48,9 +48,8 @@ function PlayerBoard({
 }: PlayerBoardProps) {
   const playerInfo = playerId ? Rune.getPlayerInfo(playerId) : null
   const isCharacterRevealed =
-    isCurrentPlayer || // Always show current player's character
-    game.turnPhase === "CHARACTER_SELECTION" || // Show all characters at end of round
-    (game.turnPhase === "PLAY_TURNS" &&
+    (isCurrentPlayer && character) || // Always show current player's character
+    (game.turnPhase === "PLAY_TURNS" && // Only reveal during play phase
       character &&
       game.currentCharacterId >= character.id && // Character is revealed when it's their turn or after
       character.id !== game.assassinatedCharacterId) // Unless they were assassinated
