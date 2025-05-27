@@ -313,7 +313,7 @@ function getCharacterAbilityDescription(character: Character): string {
     case "Thief":
       return "Steal coins from another character"
     case "Magician":
-      return "Exchange cards with another player or the deck"
+      return "Exchange your entire hand with another player's hand or the deck"
     case "King":
       return "Take crown and 1 gold for each noble district"
     case "Bishop":

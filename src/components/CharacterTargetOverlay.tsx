@@ -29,7 +29,7 @@ export function CharacterTargetOverlay({
       case "thief":
         return "Select a character to steal from"
       case "magician":
-        return "Exchange cards with a player or the deck"
+        return "Exchange your hand with another player's hand or the deck"
       case "warlord":
         return "Select a district to destroy"
       default:
