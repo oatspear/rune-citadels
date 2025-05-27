@@ -176,7 +176,7 @@ export function CharacterTargetOverlay({
                 className="confirm-button"
                 onClick={() =>
                   onSelect(
-                    0,
+                    -1, // Use -1 to indicate no player target
                     undefined,
                     selectedCards.map((c) => c.id)
                   )

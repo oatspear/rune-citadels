@@ -369,8 +369,8 @@ Rune.initLogic({
         }
 
         case "Magician": {
-          // Option 1: Exchange with another player
-          if (payload?.targetCharacterId) {
+          if (payload?.targetCharacterId && payload.targetCharacterId > 0) {
+            // Option 1: Exchange with another player
             // Find other player with matching character ID
             const targetState = Object.entries(game.playerStates).find(
               ([, state]) => state.character?.id === payload.targetCharacterId
