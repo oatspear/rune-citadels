@@ -5,6 +5,7 @@ import { CHARACTERS, DISTRICTS_TO_WIN } from "./logic"
 import { CharacterTargetOverlay } from "./components/CharacterTargetOverlay"
 import { CharacterSelect } from "./components/CharacterSelect"
 import { CardSelectOverlay } from "./components/CardSelectOverlay"
+import { HelpOverlay } from "./components/HelpOverlay"
 
 // Constants
 const MAX_PLAYERS = 4
@@ -186,6 +187,7 @@ function PlayerHand({
 }: PlayerHandProps) {
   const [isCharacterSelectOpen, setIsCharacterSelectOpen] = useState(false)
   const [isHandCardsOpen, setIsHandCardsOpen] = useState(false)
+  const [isHelpOverlayOpen, setIsHelpOverlayOpen] = useState(false)
 
   // Helper to determine if character selection is allowed
   const canSelectCharacter =
@@ -245,6 +247,14 @@ function PlayerHand({
         phase={phase}
         character={character}
       />
+
+      {isHelpOverlayOpen && (
+        <HelpOverlay
+          phase={phase}
+          characterId={character?.id}
+          closeHelp={() => setIsHelpOverlayOpen(false)}
+        />
+      )}
 
       <div className="player-hand">
         <div className="action-buttons">
@@ -307,6 +317,18 @@ function PlayerHand({
               {hasUsedAbility ? "Ability Used" : "Use Ability"}
             </button>
           )}
+
+          <div>
+            <button
+              className="action-button help-button"
+              onClick={() => setIsHelpOverlayOpen(true)}
+              aria-label="Show help"
+              title="Show game rules and character abilities"
+            >
+              ❓
+            </button>
+            <div className="action-button-label">Help</div>
+          </div>
         </div>
       </div>
     </>

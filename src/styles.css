@@ -939,3 +939,77 @@ button:not([data-disabled]) {
   background: rgba(255, 255, 255, 0.25);
   transform: translateY(-2px);
 }
+
+.help-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.help-overlay .language-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.help-overlay .language-buttons label {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease-out;
+  position: relative;
+  text-align: center;
+}
+
+.help-overlay .language-buttons label:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* change background of the selected label */
+.help-overlay .language-buttons label.active {
+  background-color: #008542;
+}
+
+.help-overlay .language-buttons label input {
+  border-radius: 4px;
+  opacity: 0;
+}
+
+.help-overlay .help-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 800px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1.6;
+  overflow-y: auto;
+}
+
+.help-overlay .close-help-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 8px;
+  transition: background 0.2s ease-out;
+}
+
+.help-overlay .close-help-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
